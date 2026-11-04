@@ -1,0 +1,8 @@
+# Ubuntu AppArmor4 application exception for the distribution bwrap binary.
+# Reviewed/installed explicitly by an administrator, never by model runtime.
+abi <abi/4.0>,
+include <tunables/global>
+
+profile business-mechanism-bwrap /usr/bin/bwrap flags=(unconfined) {
+  userns,
+}

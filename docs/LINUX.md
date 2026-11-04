@@ -20,6 +20,8 @@ python3.12 -m venv .venv
 python -m pip install -r requirements-tested.txt
 python -m pip install --no-deps .
 python -m pip check
+# Ubuntu24.04 restricted-userns hosts: review the included bwrap profile first.
+sudo sh tools/install_ubuntu_bwrap_profile.sh
 python tools/check_install.py
 python tests/isolation.py --output ./acceptance-isolation
 python tests/acceptance.py --output ./acceptance-local
@@ -27,7 +29,9 @@ python tests/acceptance.py --output ./acceptance-local
 
 Use new output directories. Once these pass, follow the normal model/data/create/run commands in README.md. The ordinary application should run under a dedicated unprivileged account. Installing bwrap is an administrator step, not a reason to execute model code with sudo.
 
-If the preflight reports `Operation not permitted`, the host's namespace or AppArmor policy may block bwrap. An administrator must configure the maintained package's application-specific policy. The program will not disable AppArmor globally, request sudo or execute unisolated code automatically. A container that blocks user namespaces is not a supported runtime merely because it is Linux.
+Ubuntu24.04 may permit creating a user namespace but deny its network capability, producing `loopback: Failed RTM_NEWADDR: Operation not permitted`. The explicit administrator command above loads the included application profile for `/usr/bin/bwrap`, granting `userns` for that program while leaving the global restriction unchanged. It refuses to overwrite a different existing local profile. The runtime does not run this installer, request sudo, disable AppArmor globally or execute unisolated code automatically. Sites with an existing distro/local bwrap policy should have their administrator integrate the rule rather than load conflicting attachment profiles.
+
+A container that blocks user namespaces is not a supported runtime merely because it is Linux. Custom bwrap binary locations need their own administrator policy; use the maintained distribution binary for this documented procedure.
 
 ## Boundary
 
