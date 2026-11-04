@@ -12,7 +12,8 @@
 | Real report completion and two real research stages | Not accepted for this release |
 | Critic benefit over a matched single agent | Not established by this code release |
 | Long-term memory growth, RSI or day-long availability | Not established |
-| Linux/Windows service deployment | Unsupported isolation adapter |
+| Linux execution | bubblewrap adapter, same integration suite and extra isolation tests in Linux CI |
+| Native Windows execution | Unsupported isolation adapter |
 
 Earlier development motivated this researcher–critic design, but private development workspaces and numerical results are not bundled. The public acceptance receipt describes the actual tests shipped here and must not be turned into a scientific success rate.
 

@@ -1,11 +1,12 @@
 # Contributing
 
-Use Python3.12 on supported macOS arm64. Install requirements-tested.txt and the source package as described in README.md. Open an issue or focused pull request explaining the problem, the changed behavior, and relevant validation.
+Use Python3.12 on macOS arm64 or Linux with bubblewrap; see docs/LINUX.md. Install requirements-tested.txt and the source package as described in README.md. Open an issue or focused pull request explaining the problem, the changed behavior, and relevant validation.
 
 ```sh
 python scripts/check_release.py
 python scripts/check_secrets.py --all-files
 python tools/check_install.py
+python tests/isolation.py --output ./acceptance-isolation-change
 python tests/acceptance.py --output ./acceptance-change
 ```
 

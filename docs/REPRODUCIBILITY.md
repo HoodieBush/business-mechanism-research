@@ -2,11 +2,12 @@
 
 ## Engineering reproduction: no provider account or cost
 
-Follow the source installation in README.md on macOS arm64/Python3.12. Install requirements-tested.txt in a new virtual environment, install this package, and run pip check and tools/check_install.py.
+Follow the source installation in README.md on macOS arm64 or Ubuntu24.04 x86_64 with Python3.12 and the required OS sandbox. Install requirements-tested.txt in a new virtual environment, install this package, and run pip check and tools/check_install.py.
 
 ```sh
 python scripts/check_release.py
 python scripts/check_secrets.py --all-files
+python tests/isolation.py --output ./acceptance-isolation-reproduction
 python tests/acceptance.py --output ./acceptance-reproduction
 ```
 

@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "business-mechanism-research"
-version = "0.1.4"
+version = "0.1.5"
 description = "Persistent researcher-critic agents for evidence-led business mechanism research"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{name = "Business Mechanism Research contributors"}]
-classifiers = ["Development Status :: 3 - Alpha", "Operating System :: MacOS", "Programming Language :: Python :: 3.12", "Topic :: Scientific/Engineering :: Artificial Intelligence"]
+classifiers = ["Development Status :: 3 - Alpha", "Operating System :: MacOS", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3.12", "Topic :: Scientific/Engineering :: Artificial Intelligence"]
 dependencies = [
   "langgraph==1.2.15", "langgraph-checkpoint-sqlite==3.1.2",
   "pydantic>=2.10,<3", "numpy>=1.26,<3", "pandas>=2.2,<3",

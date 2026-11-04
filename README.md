@@ -8,7 +8,7 @@ Give the system a business question, a SQLite database, and field definitions. A
 
 The goal is a useful, scoped understanding of an operational or measurement mechanism. Algorithm improvement, baseline superiority, and positive results are not required.
 
-**Status: research prototype, version 0.1.4.** Supported deployment is macOS Apple Silicon with Python 3.12 and `sandbox-exec`. The package provides a local CLI and synchronous Python API, not a hosted web service. Local engineering tests exercise two stages and recovery. Real-model report completion, day-long operation, and long-term research improvement remain unverified for this release. See [verified scope](docs/EVALUATION.md).
+**Status: research prototype, version 0.1.5.** Supported runtime families are macOS with `sandbox-exec` and Linux with `bubblewrap`, using Python 3.12. The CI matrix covers macOS arm64 and Ubuntu24.04 x86_64. The package provides a local CLI and synchronous Python API, not a hosted web service. Local engineering tests exercise two stages and recovery. Real-model report completion, day-long operation, and long-term research improvement remain unverified for this release. See [verified scope](docs/EVALUATION.md).
 
 ## How it works
 
@@ -31,7 +31,7 @@ The current business-data adapter is **observational and read-only**. It support
 
 ## Install from source
 
-Prerequisites: macOS arm64, an available Python 3.12 interpreter, and internet access for dependencies. Linux and Windows research execution are not supported by the current isolation adapter.
+Prerequisites: Python3.12, a working isolation backend and internet access for dependencies. macOS uses sandbox-exec. On Ubuntu24.04 install `bubblewrap` and `python3.12-venv` first with your package manager; see [Linux deployment](docs/LINUX.md) for namespace requirements. Native Windows execution is not supported.
 
 ```sh
 git clone https://github.com/HoodieBush/business-mechanism-research.git
@@ -52,6 +52,7 @@ If Python 3.12 has a different executable path, use it in the venv command. The 
 ```sh
 python scripts/check_release.py
 python scripts/check_secrets.py --all-files
+python tests/isolation.py --output ./acceptance-isolation
 python tests/acceptance.py --output ./acceptance-local
 ```
 

@@ -17,7 +17,7 @@ def main(model_path=None,data_path=None):
     def add(name,passed,detail):
         checks.append({'check':name,'passed':bool(passed),'detail':detail})
     add('python',sys.version_info[:2]==(3,12),'Requires Python 3.12.')
-    add('platform',sys.platform=='darwin' and platform.machine()=='arm64','Tested platform is macOS arm64.')
+    add('platform',(sys.platform=='darwin' and platform.machine()=='arm64') or sys.platform=='linux','macOS arm64 or Linux with actual isolation required; see support matrix.')
     modules=('business_mechanism','langgraph.graph','langgraph.checkpoint.sqlite','pydantic','numpy','pandas','scipy.stats','sklearn','statsmodels.api','matplotlib')
     for name in modules:
         try:importlib.import_module(name)
@@ -25,19 +25,13 @@ def main(model_path=None,data_path=None):
         else:add('import:'+name,True,'Import succeeded.')
     try:version=importlib.metadata.version('business-mechanism-research')
     except importlib.metadata.PackageNotFoundError:version='not-installed'
-    add('release_version',version=='0.1.4','Installed version: '+version)
-    executable=Path('/usr/bin/sandbox-exec')
-    if executable.is_file() and sys.platform=='darwin':
-        try:
-            with tempfile.TemporaryDirectory(prefix='business-research-preflight-') as td:
-                canary=Path(td).resolve()/'canary.txt';canary.write_text('local isolation probe')
-                allow=subprocess.run([str(executable),'-p','(version 1)(allow default)','/usr/bin/true'],capture_output=True,timeout=10)
-                profile='(version 1)(allow default)(deny file-read* (literal '+json.dumps(str(canary))+'))'
-                denied=subprocess.run([str(executable),'-p',profile,'/bin/cat',str(canary)],capture_output=True,timeout=10)
-                add('sandbox_exec',allow.returncode==0 and denied.returncode!=0 and not denied.stdout,'Actual sandbox launch and read denial tested.')
-        except (OSError,subprocess.TimeoutExpired):
-            add('sandbox_exec',False,'Actual sandbox launch failed or timed out; do not run without isolation.')
-    else:add('sandbox_exec',False,'Required macOS sandbox-exec is unavailable.')
+    add('release_version',version=='0.1.5','Installed version: '+version)
+    try:
+        from business_mechanism.sandbox import probe_runtime
+        probe=probe_runtime()
+        add('sandbox',probe['passed'],'Actual read/write boundary probe passed: '+probe['backend'])
+    except (ImportError,RuntimeError,OSError,subprocess.TimeoutExpired) as error:
+        add('sandbox',False,str(error))
     if model_path:
         try:
             config=json.loads(model_path.expanduser().read_text())

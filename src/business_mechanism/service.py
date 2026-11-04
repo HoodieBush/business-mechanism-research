@@ -15,6 +15,7 @@ from .data import SQLiteWorld
 from .engine import Backend, ResearchWorkspace, SQLiteWorkspace, source_identity
 from .graph import open_graph, export_handoff
 from .delivery import export_report
+from .sandbox import probe_runtime
 
 DEFAULT_LIMITS = {'token_allowance': 2000000, 'max_http_attempts': 80, 'max_transport_retries': 2,
                   'round_wall_seconds': 3600, 'max_request_bytes': 524288, 'recent_turns': 4,
@@ -165,8 +166,7 @@ def advance_stage(root, project, ws, backend):
 def run_project(path, *, stages=1, resume=False):
     if type(stages) is not int or not 1 <= stages <= 100:
         raise ValueError('Finite positive stage count required.')
-    if sys.platform != 'darwin' or not Path('/usr/bin/sandbox-exec').exists():
-        raise RuntimeError('This release requires the tested macOS sandbox-exec isolation. No unsandboxed fallback is enabled.')
+    probe_runtime()
     root = Path(path).expanduser().resolve()
     lock = (root/'service.lock').open('a')
     try:

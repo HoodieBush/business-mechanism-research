@@ -11,3 +11,7 @@ Version0.1.4 fixes the export boundary. The initial local0.1.3 package was assem
 Engine Python is retained byte-for-byte from the local source snapshot; the public API version changes to0.1.4 and package metadata, documentation and export allowlist are updated. No scientific algorithm or opinion is rewritten by this packaging correction. New workspace identities bind the new source/export; old workspaces cannot be resumed by silently changing their identity.
 
 Third-party libraries are normal installation dependencies, not vendored implementations. Their licenses remain in their own distributions; see requirements-tested.txt. This project's original code is under MIT. No external paper is claimed as an implemented result solely because its ideas informed the design.
+
+## Version0.1.5 platform adaptation
+
+The execution primitive gains a platform-command seam while retaining result/file/source-read receipts. The public worker supplies Linux bubblewrap or the macOS policy. Python uses the venv entry point, with base runtime libraries allowed separately, to avoid accidentally executing the base interpreter without installed scientific packages. The changed primitive, reuse binding and engine manifest are rehashed together; this is a deliberate new source version, not a silent change to old pinned workspaces.

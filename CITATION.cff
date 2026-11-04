@@ -4,7 +4,7 @@ type: software
 title: "Business Mechanism Research: Researcher-Critic Agents for Evidence-Led Business Research"
 authors:
   - name: "Business Mechanism Research contributors"
-version: 0.1.4
+version: 0.1.5
 date-released: '2026-11-04'
 license: MIT
 repository-code: "https://github.com/HoodieBush/business-mechanism-research"

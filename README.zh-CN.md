@@ -1,10 +1,10 @@
-# 商业机制研究系统 0.1.4
+# 商业机制研究系统 0.1.5
 
 你提供业务问题、数据和字段说明，系统自主分析、提出可证伪假说并检验。独立质疑者读取原件、复算并审查假说、实验、结论、记忆和报告；研究者根据证据回应、修订或重测。系统保存认识变化与证据链，产出有适用范围的业务认识，也允许反驳和未决结果。
 
 当前外部数据接口是只读SQLite，支持SQL和Python分析，适用于销售登记、业务计数和运营差异等研究。没有现场测量服务时，系统只研究收到的观察数据，所需新数据会列入报告。
 
-**状态：macOS研究原型开源快照。** 使用真实LangGraph，提供CLI和同步Python API。工程夹具已走通两个阶段；此前研发版本已有真实模型的假说、独立质疑、回应和修订记录，本开源快照不提供该私有实验数据，也未认证完整正式报告或24小时运行。见[发布状态](RELEASE_STATUS.json)及[证据范围](docs/EVALUATION.md)。
+**状态：macOS/Linux研究原型开源快照。** 使用真实LangGraph，提供CLI和同步Python API。工程夹具已走通两个阶段；此前研发版本已有真实模型的假说、独立质疑、回应和修订记录，本开源快照不提供该私有实验数据，也未认证完整正式报告或24小时运行。见[发布状态](RELEASE_STATUS.json)及[证据范围](docs/EVALUATION.md)。
 
 ## 系统做什么
 
@@ -30,13 +30,13 @@
 
 | 项目 | 当前要求 |
 |---|---|
-| 平台 | 已验收macOS Apple Silicon（arm64），必须有`/usr/bin/sandbox-exec` |
+| 平台 | macOS arm64使用sandbox-exec；Linux使用bubblewrap，Ubuntu24.04 x86_64进入实际CI矩阵 |
 | Python | 3.12，使用独立虚拟环境 |
 | 依赖 | 锁文件安装需访问包源；wheel不含第三方依赖 |
 | 模型 | 支持当前Chat Completions工具协议及thinking字段，详见[配置契约](docs/CONFIGURATION.zh-CN.md) |
 | 数据 | SQLite、业务背景、JSON字段字典；包内提供公开合成样例 |
 
-当前没有Linux/Windows隔离适配、Web界面或HTTP监听端口。企业可在自己的服务进程中调用Python API；远程接口与鉴权由接入方提供。
+Linux部署需先安装bubblewrap并通过实际命名空间预检，见[Linux部署](docs/LINUX.md)。当前没有Windows原生隔离适配、Web界面或HTTP监听端口。企业可在自己的服务进程中调用Python API；远程接口与鉴权由接入方提供。
 
 ## 1. 获取独立源码
 
@@ -48,6 +48,8 @@ cd business-mechanism-research
 以下命令都从这个独立项目根目录执行，不要求原开发仓库。
 
 ## 2. 安装并检查
+
+Ubuntu24.04先执行`sudo apt-get install bubblewrap python3.12-venv`；macOS使用系统sandbox-exec。其余Python安装步骤共用。
 
 先提供Python 3.12，确认`python3.12 --version`为3.12；也可将第一条命令换成实际Python 3.12解释器的路径。
 
@@ -68,6 +70,7 @@ python tools/check_install.py
 ```sh
 python scripts/check_release.py
 python scripts/check_secrets.py --all-files
+python tests/isolation.py --output ./acceptance-isolation
 python tests/acceptance.py --output ./acceptance-local
 ```
 

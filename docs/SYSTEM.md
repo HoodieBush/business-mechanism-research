@@ -28,7 +28,7 @@ Directed re-review can reuse an active action explicitly listed in the received 
 
 The current business SQLite adapter is observational. Running an analysis is not new data collection; repeated computation on the same table is not independent confirmation. If no measurement/intervention service is installed, the report must say what new evidence would be needed.
 
-Python executes under actual macOS sandbox-exec restrictions. The worker is denied access to private engine source, credentials and network resources. Source reads and computation artifacts remain traceable. Unsupported platforms do not silently run without isolation.
+Python executes under actual macOS sandbox-exec or Linux bubblewrap restrictions. The worker is denied access to private engine source, credentials and network resources. Source reads and computation artifacts remain traceable. Unsupported platforms do not silently run without isolation.
 
 ## Context and memory
 

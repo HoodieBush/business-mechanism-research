@@ -1,7 +1,7 @@
 {
   "scope": "Imported primitives and public source observer; no old role runtime or workspace inheritance.",
   "sha256": {
-    "experiments/business_team/execution.py": "5c2f933eb8bc81a6ad77412d36c47a33d604f1640339b0796c62e38b1e331701",
+    "experiments/business_team/execution.py": "a93032e2c85267ef32c30384f1aed1b1979f603faec4420c596952910f017cc7",
     "experiments/business_team/world.py": "cd0bc4cc062bb4c393ed2be8d58e8ee2f0e66e28da377fd9995d2eba4e06ae52",
     "experiments/business_team/contracts.py": "19692bc5b6b1c5c78df71ef8dd9b65e7bbce63c52774b29e4dfe3098690d56ad",
     "experiments/business_team/experiment_plans.py": "1b6714a939a0a1efbd25dff0bba41ffeb8c4f11954366073b15719b5250a2e39",

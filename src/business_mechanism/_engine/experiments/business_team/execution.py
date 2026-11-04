@@ -29,17 +29,20 @@ class PythonWorkspace:
         self.readonly_input_roots=()
         for name in ("tmp", ".matplotlib"):
             (self.directory / name).mkdir(parents=True, exist_ok=True)
-        self.python = Path(sys.executable).resolve()
+        # Retain the venv entry point; resolving its symlink would bypass
+        # pyvenv.cfg and silently use the base interpreter's dependencies.
+        self.python = Path(sys.executable).absolute()
         self.count = last_number(self.directory, 'analysis_', '.py')
 
     def profile(self,write_root=None):
         roots = [self.public, self.shared, self.directory, self.python.parent.parent,
+                 Path(sys.base_prefix).resolve(), self.python.resolve().parent.parent,
                  Path("/System"), Path("/usr"), Path("/Library"), Path("/private/preboot"), Path("/private/var/db/dyld")]
         roots += list(self.readonly_input_roots)
         # Restrict data access/write/network while retaining macOS interpreter
         # startup services. Conda itself is not the isolation boundary.
         reads = " ".join(f"(require-not (subpath {quoted(p)}))" for p in roots)
-        parents = {p for root in roots[:4] for p in root.parents}
+        parents = {p for root in roots[:6] for p in root.parents}
         reads += " " + " ".join(f"(require-not (literal {quoted(p)}))" for p in sorted(parents))
         return "\n".join(["(version 1)", "(allow default)", "(deny network*)",
                           "(deny process-info* (target others))", "(deny signal (target others))",
@@ -47,9 +50,15 @@ class PythonWorkspace:
                           ' (require-not (subpath "/dev")) (require-not (subpath "/private/etc"))))',
                           f'(deny file-write* (require-all (require-not (subpath {quoted(write_root or self.directory)})) (require-not (subpath "/dev"))))'])
 
-    def run(self, code, timeout=45):
+    def require_isolation(self):
         if not Path("/usr/bin/sandbox-exec").exists():
             raise RuntimeError("macOS sandbox unavailable; refuse unsandboxed model code")
+
+    def sandbox_command(self, profile, launcher, run_dir):
+        return ["/usr/bin/sandbox-exec", "-f", str(profile), str(self.python), "-I", "-c", launcher]
+
+    def run(self, code, timeout=45):
+        self.require_isolation()
         self.count += 1
         run_dir=self.directory/'executions'/f'run_{self.count:03d}' if self.per_execution else self.directory
         if self.per_execution:run_dir.mkdir(parents=True,exist_ok=False)
@@ -81,7 +90,7 @@ class PythonWorkspace:
         try:
             instrumentation='import source_access;source_access.install();' if (self.public/'source_access.py').exists() else ''
             launcher=f"import sys,runpy;sys.path.insert(0,{str(self.public)!r});{instrumentation}runpy.run_path({str(filename)!r},run_name='__main__')"
-            result = subprocess.run(["/usr/bin/sandbox-exec", "-f", str(profile), str(self.python), "-I", "-c", launcher],
+            result = subprocess.run(self.sandbox_command(profile, launcher, run_dir),
                                     cwd=run_dir, env=env, capture_output=True, text=True, timeout=timeout)
             response = {"ok": result.returncode == 0, "exit_code": result.returncode,
                         "stdout": result.stdout[:12000], "stderr": result.stderr[:6000], "code_file": str(filename)}

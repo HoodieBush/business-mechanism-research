@@ -43,4 +43,4 @@ CLI codes:0 command complete,2 error,3 pending. An inconclusive scientific resul
 
 Live turn progress is in deliveries/latest.json. status.last_execution is the last ended/paused invocation and may lag a current run. A handoff exists from creation, so file existence alone is not research completion.
 
-Real runs send lawful research inputs to the configured provider. No company dataset/key is distributed. This is a local component; remote authentication, other OS isolation, general migration and day-long availability remain outside verified support.
+Real runs send lawful research inputs to the configured provider. No company dataset/key is distributed. This is a local component; remote authentication, native Windows isolation, general migration and day-long availability remain outside verified support.
