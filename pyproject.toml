@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "business-mechanism-research"
+version = "0.1.4"
+description = "Persistent researcher-critic agents for evidence-led business mechanism research"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Business Mechanism Research contributors"}]
+classifiers = ["Development Status :: 3 - Alpha", "Operating System :: MacOS", "Programming Language :: Python :: 3.12", "Topic :: Scientific/Engineering :: Artificial Intelligence"]
+dependencies = [
+  "langgraph==1.2.15", "langgraph-checkpoint-sqlite==3.1.2",
+  "pydantic>=2.10,<3", "numpy>=1.26,<3", "pandas>=2.2,<3",
+  "scipy>=1.12,<2", "scikit-learn>=1.5,<2", "statsmodels>=0.15,<0.16",
+  "matplotlib>=3.10,<4",
+]
+
+[project.urls]
+Homepage = "https://github.com/HoodieBush/business-mechanism-research"
+Repository = "https://github.com/HoodieBush/business-mechanism-research"
+Issues = "https://github.com/HoodieBush/business-mechanism-research/issues"
+
+[project.scripts]
+business-research = "business_mechanism.cli:entry"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["business_mechanism"]
+
+[tool.setuptools.package-data]
+business_mechanism = ["_engine/**/*", "engine_manifest.json"]

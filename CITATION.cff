@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "Please cite this software if it supports your research. No associated paper is published yet."
+type: software
+title: "Business Mechanism Research: Researcher-Critic Agents for Evidence-Led Business Research"
+authors:
+  - name: "Business Mechanism Research contributors"
+version: 0.1.4
+date-released: '2026-11-04'
+license: MIT
+repository-code: "https://github.com/HoodieBush/business-mechanism-research"
+url: "https://github.com/HoodieBush/business-mechanism-research"
+keywords:
+  - business mechanism discovery
+  - scientific agents
+  - researcher-critic
+  - LangGraph

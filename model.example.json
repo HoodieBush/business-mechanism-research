@@ -1,0 +1,14 @@
+{
+  "model": "YOUR_THINKING_TOOL_MODEL",
+  "base_url": "https://your-gateway.example/v1",
+  "api_key_env": "BUSINESS_RESEARCH_API_KEY",
+  "api_key_file": "~/.config/business-mechanism/api_key",
+  "requires_api_key": true,
+  "request_timeout_seconds": 600,
+  "bypass_proxy": true,
+  "generation_options": {
+    "thinking": {"type": "enabled"},
+    "reasoning_effort": "high",
+    "max_tokens": 65536
+  }
+}

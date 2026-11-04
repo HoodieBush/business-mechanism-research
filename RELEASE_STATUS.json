@@ -1,0 +1,25 @@
+{
+  "version": "0.1.4",
+  "status": "research_prototype",
+  "supported_platform": "macOS arm64 / Python 3.12 / sandbox-exec",
+  "interfaces": [
+    "local CLI",
+    "synchronous Python API"
+  ],
+  "actual_langgraph": true,
+  "roles": [
+    "researcher",
+    "independent critic"
+  ],
+  "deployment_validation": "passed_fresh_venv_source_build_and_installed_wheel",
+  "scientific_efficacy_verified": false,
+  "real_report_completion_verified": false,
+  "day_long_operation_verified": false,
+  "linux_windows_execution_supported": false,
+  "credential_or_private_business_data_included": false,
+  "provenance": "docs/SOURCE_PROVENANCE.md",
+  "verification": "verification/deployment_acceptance.json",
+  "engineering_checks": 17,
+  "external_provider_calls_in_engineering_tests": 0,
+  "prompt_text_changed_by_export": false
+}

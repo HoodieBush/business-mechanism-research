@@ -1,0 +1,15 @@
+{
+  "scope": "Imported primitives and public source observer; no old role runtime or workspace inheritance.",
+  "sha256": {
+    "experiments/business_team/execution.py": "5c2f933eb8bc81a6ad77412d36c47a33d604f1640339b0796c62e38b1e331701",
+    "experiments/business_team/world.py": "cd0bc4cc062bb4c393ed2be8d58e8ee2f0e66e28da377fd9995d2eba4e06ae52",
+    "experiments/business_team/contracts.py": "19692bc5b6b1c5c78df71ef8dd9b65e7bbce63c52774b29e4dfe3098690d56ad",
+    "experiments/business_team/experiment_plans.py": "1b6714a939a0a1efbd25dff0bba41ffeb8c4f11954366073b15719b5250a2e39",
+    "experiments/business_team/scenario_contract.py": "e09c7977bf9e5425b05745a2a9baab95f2b18ed95a2dfe1e517aa8c0a88c5a77",
+    "experiments/business_team/source_access.py": "5194fff65952bed74c71264c62d5aa71b0691a6facb1a2cf61844554a85d0923",
+    "experiments/business_team/ordering_policy.py": "3fb940f97b901f6752930fe33a88188c0c7e6729f2391a2a9a579913d01bacad",
+    "experiments/capability_lab/model_protocol.py": "8fec3cba45017826d081933746c09b3fb01fac70111403fda6b302d5b2a12945",
+    "experiments/capability_lab/model_credentials.py": "8713712d0bd66fb76e8ee1baf6323d7a34940ac114df937d289eabf88d7c40f7",
+    "experiments/capability_lab/token_budget.py": "ae5befd0bf90637090fcc1775f71aeac29408e23636d1be5e05633e9c748225f"
+  }
+}
