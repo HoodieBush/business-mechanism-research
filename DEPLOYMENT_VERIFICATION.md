@@ -2,7 +2,7 @@
 
 ## Version0.1.5
 
-A shared execution seam now supports macOS and Linux bubblewrap, and preserves the venv Python entry point. CI creates a real venv on macOS15 and Ubuntu24.04, installs the tested dependencies and source, then runs the actual platform isolation and two-stage integration fixtures. See the workflow status and platform acceptance receipts. Linux namespace readiness is tested before a model call; unavailable isolation does not fall back.
+A shared execution seam now supports macOS and Linux bubblewrap, and preserves the venv Python entry point. CI creates a real venv on macOS15 and Ubuntu24.04, installs the tested dependencies and source, then runs the actual platform isolation and two-stage integration fixtures. Both hosted jobs passed: macOS17 engineering +10 isolation checks, Linux17 engineering +14 isolation checks. See [the exact tested CI run](https://github.com/HoodieBush/business-mechanism-research/actions/runs/41772463570) and verification/deployment_acceptance.json. Overlapping checks are not new scientific samples. Linux namespace readiness is tested before a model call; unavailable isolation does not fall back.
 
 ## Historical Version0.1.4
 
@@ -16,4 +16,4 @@ The installation preflight exercises real sandbox launch and denied file access.
 
 This is a fresh software environment on the development Mac, not a second physical company's machine. GitHub CI provides an additional hosted machine when it completes. No real-provider connectivity test is performed for recipients, no key is distributed, and no scientific discovery or24-hour availability claim follows from these deployment tests.
 
-To reproduce from a checkout use README.md. A provider-specific real run additionally requires your own compatible service and credential. Linux/Windows are not supported by the current research isolation adapter.
+To reproduce from a checkout use README.md. A provider-specific real run additionally requires your own compatible service and credential. The preceding0.1.4 snapshot supported macOS only;0.1.5 adds the Linux adapter. Native Windows remains unverified/unsupported.

@@ -35,7 +35,7 @@ A container that blocks user namespaces is not a supported runtime merely becaus
 
 ## Boundary
 
-The worker gets an empty mount namespace with read-only runtime dependencies and lawful data/artifacts, a private `/proc` and `/dev`, and an isolated network namespace. Only the current execution directory is writable. Installed engine source is masked even if it shares the Python environment. Controller environment/credentials are not inherited. Nested user namespaces and capabilities are disabled; timeout terminates the bwrap process tree.
+The worker gets an empty mount namespace with read-only runtime dependencies and lawful data/artifacts, a private `/proc` and `/dev`, and an isolated network namespace. Only the current execution directory is exposed as a writable host directory; namespace-local temporary/device files are separate. Installed engine source is masked even if it shares the Python environment. Controller environment/credentials are not inherited. Nested user namespaces and capabilities are disabled; timeout terminates the bwrap process tree.
 
 The venv Python entry point is retained so worker scientific imports use the installed project environment, rather than accidentally resolving to a base Python without its dependencies. The existing result, source-read, file-version and execution receipts are retained.
 

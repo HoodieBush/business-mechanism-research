@@ -30,7 +30,7 @@
 
 | 项目 | 当前要求 |
 |---|---|
-| 平台 | macOS arm64使用sandbox-exec；Linux使用bubblewrap，Ubuntu24.04 x86_64进入实际CI矩阵 |
+| 平台 | macOS arm64使用sandbox-exec；Linux使用bubblewrap，Ubuntu24.04 x86_64实际CI通过 |
 | Python | 3.12，使用独立虚拟环境 |
 | 依赖 | 锁文件安装需访问包源；wheel不含第三方依赖 |
 | 模型 | 支持当前Chat Completions工具协议及thinking字段，详见[配置契约](docs/CONFIGURATION.zh-CN.md) |
@@ -49,7 +49,15 @@ cd business-mechanism-research
 
 ## 2. 安装并检查
 
-Ubuntu24.04先执行`sudo apt-get install bubblewrap python3.12-venv`；macOS使用系统sandbox-exec。其余Python安装步骤共用。
+Ubuntu24.04先安装后端，审阅仓库内的bwrap专用AppArmor配置并由管理员加载；此配置保留全局限制。macOS跳过下面这段，使用系统sandbox-exec。
+
+```sh
+sudo apt-get update
+sudo apt-get install -y bubblewrap python3.12-venv
+sudo sh tools/install_ubuntu_bwrap_profile.sh
+```
+
+其余Python安装步骤两平台共用。
 
 先提供Python 3.12，确认`python3.12 --version`为3.12；也可将第一条命令换成实际Python 3.12解释器的路径。
 

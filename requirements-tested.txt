@@ -1,4 +1,4 @@
-# Tested on macOS arm64, Python 3.12.15; includes optional business-statistics/plotting stack
+# Tested on macOS arm64 and Ubuntu24.04 x86_64 with Python3.12; includes business-statistics/plotting stack
 aiosqlite==0.22.1
 annotated-types==0.8.0
 anyio==4.15.1

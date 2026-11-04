@@ -11,7 +11,7 @@
     "researcher",
     "independent critic"
   ],
-  "deployment_validation": "linux_candidate_pending_hosted_CI",
+  "deployment_validation": "passed_hosted_macos_and_ubuntu24_04_in_real_venvs",
   "scientific_efficacy_verified": false,
   "real_report_completion_verified": false,
   "day_long_operation_verified": false,
@@ -26,5 +26,14 @@
   "isolation": {
     "macOS": "sandbox-exec",
     "Linux": "bubblewrap user/mount/pid/network namespaces"
+  },
+  "verified_platforms": [
+    "macOS15 arm64 / sandbox-exec",
+    "Ubuntu24.04 x86_64 / maintained bubblewrap and scoped AppArmor profile"
+  ],
+  "engineering_checks_per_platform": 17,
+  "isolation_checks": {
+    "macOS": 10,
+    "Linux": 14
   }
 }

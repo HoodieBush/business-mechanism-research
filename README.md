@@ -36,6 +36,19 @@ Prerequisites: Python3.12, a working isolation backend and internet access for d
 ```sh
 git clone https://github.com/HoodieBush/business-mechanism-research.git
 cd business-mechanism-research
+```
+
+On Ubuntu24.04, install the backend and review/load its application-specific AppArmor profile; macOS skips this block:
+
+```sh
+sudo apt-get update
+sudo apt-get install -y bubblewrap python3.12-venv
+sudo sh tools/install_ubuntu_bwrap_profile.sh
+```
+
+Then on either supported platform:
+
+```sh
 python3.12 -m venv .venv
 . .venv/bin/activate
 python -m pip install -r requirements-tested.txt

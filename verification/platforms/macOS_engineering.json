@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "actual_sandbox_values_and_source_reads": true,
+    "both_roles_used_independent_tools": true,
+    "completed_stage_limit_does_not_repay": true,
+    "durable_error_ack_recovers_once_without_repay": true,
+    "formal_reports_readable_and_archived": true,
+    "full_model_capacity_and_thinking_kept": true,
+    "lost_response_keeps_reservation_and_no_implicit_resend": true,
+    "missing_measurement_service_is_explicit": true,
+    "native_process_reopen_resumes_to_report": true,
+    "no_experiment_billing_required": true,
+    "operator_pause_has_durable_handoff": true,
+    "original_prediction_and_history_retained": true,
+    "producer_rejects_foreign_parent_ids_then_recovers": true,
+    "sql_read_only": true,
+    "transport_never_serializes_echoed_credential": true,
+    "two_actual_graph_research_stages": true,
+    "two_native_hypothesis_test_assessment_cycles": true
+  },
+  "external_provider_calls": 0,
+  "fixture_only": true,
+  "local_fixture_http": 45,
+  "not_scientific_evidence": true,
+  "status": "passed"
+}

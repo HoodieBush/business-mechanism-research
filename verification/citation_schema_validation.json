@@ -1,6 +1,6 @@
 {
   "passed": true,
   "schema": "https://citation-file-format.github.io/1.2.0/schema.json",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "provider_calls": 0
 }
