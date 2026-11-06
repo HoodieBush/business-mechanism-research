@@ -36,6 +36,12 @@ def main(model_path=None,data_path=None):
         add('sandbox',probe['passed'],'Actual read/write boundary probe passed: '+probe['backend'])
     except (ImportError,RuntimeError,OSError,subprocess.TimeoutExpired) as error:
         add('sandbox',False,str(error))
+    try:
+        with sqlite3.connect(':memory:') as probe_db:
+            heap = probe_db.execute('PRAGMA hard_heap_limit').fetchone()
+        add('sqlite_query_heap_limit', heap is not None, 'SQLite must expose hard_heap_limit; each isolated SQL worker verifies activation.')
+    except sqlite3.Error:
+        add('sqlite_query_heap_limit', False, 'SQLite hard heap limit probe failed.')
     if model_path:
         try:
             config=json.loads(model_path.expanduser().read_text())

@@ -45,7 +45,7 @@
   "direct_peer_discussion": "not included",
   "release_name": "v0",
   "release_tag": "v0",
-  "regression_tests": 75,
-  "regression_passed": 73,
+  "regression_tests": 76,
+  "regression_passed": 74,
   "regression_skipped": 2
 }

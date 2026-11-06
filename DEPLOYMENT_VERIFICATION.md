@@ -4,7 +4,7 @@ v0 is verified locally on Linux with bubblewrap and Python3.12. This receipt cov
 
 | Check | Count |
 |---|---:|
-| Regression tests | 75 |
+| Regression tests | 76 |
 | Linux isolation | 14 |
 | Two-stage acceptance | 17 |
 | Business workflow | 21 |
@@ -12,7 +12,7 @@ v0 is verified locally on Linux with bubblewrap and Python3.12. This receipt cov
 | Continuation | 9 |
 | Cross-layer update compatibility | 11 |
 
-The75 regression cases comprise73 passes and2 optional historical-bundle skips; mandatory synthetic migration coverage passed.
+The 76 regression cases comprise 74 passes and 2 optional historical-bundle skips; mandatory synthetic migration coverage passed.
 
 The installed wheel additionally passes CLI/preflight, dependency checks and the actual two-stage fixture outside its source directory. Source archives are checked for fixed-engine integrity, necessary deployment files, version consistency and excluded private/runtime files. Machine-readable results are recorded in [verification/v0.json](verification/v0.json).
 

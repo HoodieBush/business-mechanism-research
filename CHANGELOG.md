@@ -5,6 +5,7 @@
 Initial v0 release of the business mechanism research system.
 
 - Actual LangGraph researcher–critic workflow, read-only SQLite and isolated Python execution.
+- Platform-specific query memory limits: SQLite hard heap limits, Linux address-space limits and a macOS process RSS guard.
 - Persistent batch query outputs, paging, explicit retry and source-attributed results.
 - Durable review drafts, field-level repair, idempotent commits and paid-request tool validation.
 - Active-hypothesis limits, explicit unresolved endpoints, bounded recovery and detached supervision.

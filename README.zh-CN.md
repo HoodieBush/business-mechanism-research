@@ -15,7 +15,7 @@ v0提供本地CLI和同步Python API，使用真实LangGraph调度。运行环�
 
 ## 安装
 
-Linux先按[隔离部署说明](docs/LINUX.md)配置bubblewrap。准备Python3.12后，在源码目录执行：
+SQLite须支持`PRAGMA hard_heap_limit`，安装预检会检查。Linux先按[隔离部署说明](docs/LINUX.md)配置bubblewrap。准备Python3.12后，在源码目录执行：
 
 ```sh
 python3.12 -m venv .venv

@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import sqlite3
+import sys
 import time
 from experiments.insight_research.common import digest, encoded, now
 from .sandbox import RestrictedPythonWorkspace
@@ -26,14 +27,20 @@ def file_hash(path):
 # This is staged as inspected source by RestrictedPythonWorkspace, not imported
 # from the hidden engine. No arbitrary SQL is interpolated into Python code.
 WORKER = r'''
-import base64,fcntl,json,os,pathlib,resource,sqlite3,stat,time
+import base64,fcntl,json,os,pathlib,resource,sqlite3,stat,sys,time
 cfg=json.loads(base64.b64decode(CONFIG))
 root=pathlib.Path(os.environ['WORK_DIR'])
-resource.setrlimit(resource.RLIMIT_AS,(cfg['memory_bytes'],cfg['memory_bytes']))
+# Darwin already reserves more virtual address space than this query quota.
+# Its process RSS is guarded by the controller; SQLite heap is bounded below.
+if sys.platform=='linux':
+    resource.setrlimit(resource.RLIMIT_AS,(cfg['memory_bytes'],cfg['memory_bytes']))
 resource.setrlimit(resource.RLIMIT_FSIZE,(cfg['disk_bytes'],cfg['disk_bytes']))
 resource.setrlimit(resource.RLIMIT_CPU,(cfg['seconds']+1,cfg['seconds']+2))
 started=time.monotonic();rows=0;columns=[];ticks=0;limit_hit=None
 out=sqlite3.connect(root/'result.sqlite')
+heap=out.execute('PRAGMA hard_heap_limit='+str(cfg['memory_bytes'])).fetchone()
+if not heap or not 0<heap[0]<=cfg['memory_bytes']:
+    raise RuntimeError('SQLite hard_heap_limit unavailable; refusing unbounded query')
 out.execute('PRAGMA journal_mode=OFF')
 out.execute('PRAGMA max_page_count='+str(cfg['disk_bytes']//4096))
 out.execute('CREATE TABLE result_rows(n INTEGER PRIMARY KEY,payload TEXT NOT NULL)')
@@ -203,6 +210,8 @@ class DataJobs:
         number = len(item['attempts'])+1
         worker = RestrictedPythonWorkspace(directory/str(number), self.ws.public,
                                             directory, per_execution=True)
+        if sys.platform == 'darwin':
+            worker.rss_limit_bytes = profile['memory_bytes']
         run_dir = worker.directory/'executions'/'run_001'
         attempt = {'attempt': number, 'status': 'running', 'started_at': now(),
                    'directory': str(run_dir), 'seconds': seconds}
@@ -233,11 +242,17 @@ class DataJobs:
         else:
             execution = attempt.get('execution', {})
             text = execution.get('error', '')+' '+execution.get('stderr', '')
-            code = ('time_limit' if 'time limit' in text else 'memory_limit' if 'MemoryError' in text else
+            code = ('time_limit' if 'time limit' in text else 'memory_limit' if 'MemoryError' in text or 'worker_memory_limit' in text else
+                    'resource_monitor_failed' if 'worker_resource_monitor_failed' in text else
                     'disk_limit' if execution.get('exit_code') in (-25, 153) or 'disk is full' in text or 'File too large' in text else 'worker_interrupted')
             values = {'status': 'failed', 'coverage': 'incomplete', 'output_rows': 0,
                       'error': {'error_code': code, 'retryable': True,
                                 'message': 'No durable completion receipt; partial files retained. Retry starts a new full execution.'}}
+        guard = attempt.get('execution', {}).get('error_code')
+        if guard in ('worker_memory_limit', 'worker_resource_monitor_failed'):
+            values.update(status='partial' if values.get('output_rows') else 'failed', coverage='incomplete',
+                          error={'error_code': 'memory_limit' if guard == 'worker_memory_limit' else 'resource_monitor_failed',
+                                 'retryable': True, 'message': guard+'; original files retained.'})
         attempt.update(values, finished_at=now())
         attempt['artifacts'] = [self.ws.file_ref(p) for p in (root/'result.sqlite', metrics,
             root/'analysis_001.py', root/'execution_001.json') if p.exists()]

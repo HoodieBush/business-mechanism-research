@@ -15,7 +15,7 @@ See [interface details](docs/AGENT_REPAIRS.zh-CN.md). Tool execution, review agr
 
 ## Install and verify
 
-Configure the OS sandbox first; Linux instructions are in [docs/LINUX.md](docs/LINUX.md).
+SQLite must support `PRAGMA hard_heap_limit` (checked by installation preflight). Configure the OS sandbox first; Linux instructions are in [docs/LINUX.md](docs/LINUX.md).
 
 ```sh
 python3.12 -m venv .venv

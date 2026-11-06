@@ -22,7 +22,7 @@ close_research_stage(outcome=unresolved/blocked, reason, unresolved_refs, eviden
 4. `get_data_job(job_ref)`读取精简状态和回执；`read_data_result(result_ref, cursor, limit)`读取小型结果页和SQLite产物引用。大行/大结果在隔离Python中分析。
 5. `cancel_data_job(job_ref)`取消；`retry_data_job(job_ref)`明确新建attempt重跑原SQL，保留失败部分产物。
 
-默认interactive为30秒/512MiB内存/64MiB输出及临时文件；batch为600秒/1GiB内存/512MiB输出及临时文件。实际执行还受原项目剩余墙钟时间约束。输入、网络和私有源代码仍受原OS隔离保护。限制是执行保护，不能据超限声称科学否证。
+默认interactive为30秒/512MiB内存/64MiB输出及临时文件；batch为600秒/1GiB内存/512MiB输出及临时文件。两平台都设置SQLite硬堆上限；Linux另有地址空间硬限，macOS由控制器每约0.1秒采样进程RSS，超限终止，采样间可能短暂超额。RSS读取失败也终止。实际执行还受原项目剩余墙钟时间约束。输入、网络和私有源代码仍受原OS隔离保护。限制是执行保护，不能据超限声称科学否证。
 
 SQLite完整执行GROUP BY、AVG、DISTINCT、排序、窗口与JOIN；fetchmany只分批写出结果，不改变SQL计算。已完成结果的游标可恢复；通用SQL内部计算不支持断点续算。显式可分区/可合并计划尚未安装。未完成任务只有incomplete覆盖，不会产生完整result_ref。
 
@@ -96,3 +96,5 @@ CoverageCheck支持basis=source_inspected，仅用于方法组件；绑定实际
 ## 验证任务与诚实交付
 
 request_revalidation对完整但覆盖不足的旧审查发起有界同目标复核，保留原意见/阈值；活动视图和调度器优先完成可修复验证。新有效审查以事件更新目标终点，旧未决理由保存在endpoint_history。无已核验findings的报告使用inspect_report_disclosure和record_fidelity审查，不给H/A科学clearance。已交付范围不重复发布；实际数据计数、有限验证/收尾与真实交付后的工作窗口分别登记。
+
+资源实现参考：[SQLite hard_heap_limit](https://www.sqlite.org/pragma.html#pragma_hard_heap_limit)。Darwin拒绝将地址空间上限降至既有映射用量以下，见[Apple内核实现](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_resource.c)。

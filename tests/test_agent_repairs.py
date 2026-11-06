@@ -8,12 +8,14 @@ import threading
 import time
 import os
 import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 from business_mechanism import create_project
 from business_mechanism.service import open_project
 from business_mechanism.engine import Reviewer, ReviewerRuntime, source_identity
 from business_mechanism.data_jobs import DataJobs, PROFILES, file_hash
+from business_mechanism.sandbox import RestrictedPythonWorkspace
 from business_mechanism.review_drafts import ReviewDrafts
 from business_mechanism.allocations import allocate_review_requests, review_allocation
 from business_mechanism.graph import open_graph
@@ -162,6 +164,39 @@ class AgentRepairs(unittest.TestCase):
             memory = jobs.run_next(remaining_seconds=40)
         self.assertEqual(memory['error']['error_code'], 'memory_limit', memory)
         self.assertEqual(memory['coverage'], 'incomplete')
+        if sys.platform == 'darwin':
+            # Python allocations are outside SQLite's heap. Exercise the actual
+            # parent-side RSS guard too, retaining the OS sandbox throughout.
+            worker = RestrictedPythonWorkspace(self.root/'rss-guard', self.ws.public,
+                                               self.ws.science, per_execution=True)
+            worker.rss_limit_bytes = 48*1024*1024
+            result = worker.run('import time; data=bytearray(96*1024*1024); time.sleep(4)', timeout=6)
+            self.assertFalse(result['ok'], result)
+            self.assertEqual(result['error_code'], 'worker_memory_limit', result)
+            self.assertGreater(result['memory_guard']['peak_observed_bytes'], worker.rss_limit_bytes)
+            with patch('business_mechanism.bounded_worker.subprocess.run',
+                       return_value=subprocess.CompletedProcess([], 1, '', 'probe unavailable')):
+                denied = worker.run('import time; time.sleep(4)', timeout=6)
+            self.assertFalse(denied['ok'], denied)
+            self.assertEqual(denied['error_code'], 'worker_resource_monitor_failed', denied)
+
+    def test_resource_guard_overrides_completion_receipt(self):
+        jobs = DataJobs(self.ws); source = jobs.snapshot()
+        for index, guard in enumerate(('worker_memory_limit', 'worker_resource_monitor_failed')):
+            item = jobs.start('SELECT id FROM observations', [], 'interactive', source['snapshot_ref'], key='guard-'+str(index))
+            directory = self.ws.science/('guard-receipt-'+str(index)); directory.mkdir()
+            metrics = directory/'metrics.json'
+            metrics.write_text(json.dumps({'status': 'completed', 'coverage': 'complete_for_declared_query',
+                                          'columns': ['id'], 'output_rows': 1, 'error': None}))
+            original = metrics.read_bytes()
+            attempt = {'attempt': 1, 'directory': str(directory), 'execution': {'ok': False, 'error_code': guard}}
+            item['attempts'] = [attempt]
+            jobs.finish(item, attempt)
+            done = jobs.get(item['job_ref'])
+            self.assertEqual(done['coverage'], 'incomplete')
+            self.assertEqual(done['status'], 'partial')
+            self.assertIsNone(done['result_ref'])
+            self.assertEqual(metrics.read_bytes(), original)
 
     def test_crashed_partial_attempt_reconciles_then_retries_without_mixing(self):
         jobs = DataJobs(self.ws); source = jobs.snapshot()

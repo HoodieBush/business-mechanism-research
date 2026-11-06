@@ -47,12 +47,26 @@ def run(worker, code, timeout):
     launcher=f'import sys,runpy;{limits}sys.path.insert(0,{str(worker.public)!r});{instrumentation}runpy.run_path({str(filename)!r},run_name="__main__")'
     out=run_dir/f'execution_{worker.count:03d}_stdout.txt'; err=run_dir/f'execution_{worker.count:03d}_stderr.txt'
     limit=2*1024*1024; failure=None; started=time.monotonic()
+    rss_limit=getattr(worker,'rss_limit_bytes',None); next_rss_check=started; peak_rss=0
     with out.open('wb') as stdout, err.open('wb') as stderr:
         child=subprocess.Popen(worker.sandbox_command(profile,launcher,run_dir),cwd=run_dir,env=env,
                                stdout=stdout,stderr=stderr,start_new_session=True)
         while child.poll() is None:
             if time.monotonic()-started>=timeout: failure='worker_time_limit'
             elif out.stat().st_size+err.stat().st_size>limit: failure='worker_output_limit'
+            if rss_limit and time.monotonic()>=next_rss_check:
+                # sandbox-exec execs the SQL interpreter in this PID. Probe from
+                # the controller so the isolated query cannot disable the guard.
+                try:
+                    probe=subprocess.run(['/bin/ps','-o','rss=','-p',str(child.pid)],
+                                         capture_output=True,text=True,timeout=1)
+                    rss=int(probe.stdout.strip())*1024
+                    if probe.returncode: raise ValueError('RSS probe failed')
+                    peak_rss=max(peak_rss,rss)
+                    if rss>rss_limit: failure='worker_memory_limit'
+                except (OSError,ValueError,subprocess.TimeoutExpired):
+                    if child.poll() is None: failure='worker_resource_monitor_failed'
+                next_rss_check=time.monotonic()+.1
             if failure:
                 try: os.killpg(child.pid,signal.SIGKILL)
                 except ProcessLookupError: pass
@@ -63,6 +77,7 @@ def run(worker, code, timeout):
     with err.open('rb') as stream: stderr=stream.read(6000).decode('utf-8','replace')
     response={'ok':child.returncode==0 and failure is None,'exit_code':child.returncode,'stdout':stdout,'stderr':stderr,
               'stdout_truncated':out.stat().st_size>12000,'stderr_truncated':err.stat().st_size>6000,'code_file':str(filename)}
+    if rss_limit: response['memory_guard']={'kind':'sampled_process_rss','limit_bytes':rss_limit,'peak_observed_bytes':peak_rss,'interval_seconds':.1}
     if failure: response.update(error=failure,error_code=failure,coverage='incomplete')
     after=files(); changed=[p for p,h in after.items() if before.get(p)!=h or modified.get(p)!=p.stat().st_mtime_ns]
     for p in before:
