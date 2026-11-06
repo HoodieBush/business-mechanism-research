@@ -1,22 +1,18 @@
-# Verified scope and limitations
+# v0 evaluation scope
 
-| Item | Current evidence |
-|---|---|
-| Independent source/wheel installation | Tested from a new Python3.12 environment with tested dependencies; see DEPLOYMENT_VERIFICATION.md |
-| Actual LangGraph role scheduling | Integration fixture with real checkpoints and role calls |
-| Two engineering stages and archived reports | Passed deterministic loopback fixture |
-| SQL/Python tools and OS isolation | Actual SQLite and macOS sandbox execution; source reads retained |
-| Pause/reopen and error-receipt recovery | Injected persisted-state gaps and actual reopen |
-| Version and reference checks | Illegal parent IDs rejected, valid fixture repairs accepted |
-| Scientific mechanism discovery on this public release | No blind scientific benchmark or real-provider efficacy claim |
-| Real report completion and two real research stages | Not accepted for this release |
-| Critic benefit over a matched single agent | Not established by this code release |
-| Long-term memory growth, RSI or day-long availability | Not established |
-| Linux execution | bubblewrap adapter, same integration suite and extra isolation tests in Linux CI |
-| Native Windows execution | Unsupported isolation adapter |
+v0 has reproducible local engineering checks for real LangGraph scheduling, SQL/Python tools, OS isolation, two-role/two-stage reports, rejected operations, pause/reopen, shared ledgers, bounded supervision and update compatibility. See [deployment verification](../DEPLOYMENT_VERIFICATION.md).
 
-Earlier development motivated this researcher–critic design, but private development workspaces and numerical results are not bundled. The public acceptance receipt describes the actual tests shipped here and must not be turned into a scientific success rate.
+Scientific effectiveness and uninterrupted 24-hour availability have not been certified. Critic agreement, a clearance flag and report creation are system events, not ground truth. The synthetic deployment example is visible and is not a blind discovery benchmark.
 
-The code can examine aggregate business records and distinguish measurements and alternatives. Aggregate association alone does not identify a causal commercial rule. A unique or sequential-looking record ID is not automatically a timestamp. Reused computations are not new independent checks. The critic can make mistakes; its opinion does not become truth by program acceptance.
+Known research-quality limits include:
 
-An unfinished run still exports useful, attributed progress. That solves visibility of saved work, not the remaining challenge of reliable formal report completion under a finite allowance.
+- Metric direction and business interpretation can diverge, including confusion between stockout hours and inventory levels.
+- Different weighting units or target populations can be narrated as the same effect.
+- Hypothesis conditions can drift when restated as goals or code.
+- A queued follow-up review may remain undelegated, or exhaust its local allocation.
+- Repeating observed numbers or reusing the same data does not add an independent sample.
+- Observational differences do not by themselves confirm replenishment, inventory-management behavior or a causal supply mechanism.
+
+Useful descriptive statistics, falsified predictions and honest unresolved findings remain valid research outputs when checked against their exact scope. Review final claims against original conditions, measurements, estimators, actual outputs and limitations. Private experimental timelines and paid transcripts are excluded from this release.
+
+The Linux revision has current local engineering evidence. macOS is a supported isolation adapter; consult matching-commit CI results separately from the bundled local Linux receipt. Native Windows isolation is unsupported. Repeated hashing of large prior inputs can cause substantial memory/I/O overhead; arbitrary context growth or every future recovery condition is not certified by the fixtures.

@@ -1,6 +1,6 @@
 {
-  "version": "0.1.5",
-  "status": "research_prototype",
+  "version": "0.0.0",
+  "status": "initial_release",
   "supported_platform": "macOS arm64 / Linux with bubblewrap / Python3.12",
   "interfaces": [
     "local CLI",
@@ -11,13 +11,13 @@
     "researcher",
     "independent critic"
   ],
-  "deployment_validation": "passed_hosted_macos_and_ubuntu24_04_in_real_venvs",
+  "deployment_validation": "local_linux_acceptance_passed; inherited_macOS_baseline_receipts_are_separate",
   "scientific_efficacy_verified": false,
   "real_report_completion_verified": false,
   "day_long_operation_verified": false,
   "credential_or_private_business_data_included": false,
   "provenance": "docs/SOURCE_PROVENANCE.md",
-  "verification": "verification/deployment_acceptance.json",
+  "verification": "verification/v0.json",
   "engineering_checks": 17,
   "external_provider_calls_in_engineering_tests": 0,
   "prompt_text_changed_by_export": false,
@@ -28,12 +28,24 @@
     "Linux": "bubblewrap user/mount/pid/network namespaces"
   },
   "verified_platforms": [
-    "macOS15 arm64 / sandbox-exec",
-    "Ubuntu24.04 x86_64 / maintained bubblewrap and scoped AppArmor profile"
+    "Linux / bubblewrap / Python3.12 (current local revision)"
   ],
   "engineering_checks_per_platform": 17,
   "isolation_checks": {
     "macOS": 10,
     "Linux": 14
-  }
+  },
+  "current_revision_platform": "Linux local verification; macOS evidence from matching-commit CI",
+  "known_limits": [
+    "Agent acceptance is not scientific certification; metric direction, aggregation consistency and original-criterion fidelity require audit.",
+    "Some follow-up reviews may remain undelegated or exhaust their local allocation.",
+    "Full 24-hour availability has not been verified.",
+    "Large prior-input hashing can require memory proportional to input size."
+  ],
+  "direct_peer_discussion": "not included",
+  "release_name": "v0",
+  "release_tag": "v0",
+  "regression_tests": 75,
+  "regression_passed": 73,
+  "regression_skipped": 2
 }

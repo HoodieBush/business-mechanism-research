@@ -8,6 +8,11 @@ python scripts/check_secrets.py --all-files
 python tools/check_install.py
 python tests/isolation.py --output ./acceptance-isolation-change
 python tests/acceptance.py --output ./acceptance-change
+python -m unittest discover -s tests -p 'test_*.py' -v
+python tests/update_compatibility.py --output ./acceptance-update-change
+python tests/business_workflow.py --output ./acceptance-business-change
+python tests/continuous.py --output ./acceptance-supervisor-change
+python tests/continuation.py --output ./acceptance-continuation-change
 ```
 
 Use a new acceptance directory. No model credential is needed. Real model tests are opt-in, incur costs, and must specify the model/configuration, inputs, all-role allowance, stop conditions and complete consumption.

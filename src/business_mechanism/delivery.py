@@ -60,6 +60,9 @@ def export_saved_progress(path):
 def export_report(backend):
     ws = backend.ws; report = ws.report()
     directory = backend.root/'deliveries'; directory.mkdir(exist_ok=True)
+    if hasattr(ws, 'study_budget'):
+        from .convergence import agenda
+        write_json(directory/'research_agenda.json', agenda(ws))
     if not report:
         current = directory/'当前研究报告.md'
         source=directory/'latest.json'

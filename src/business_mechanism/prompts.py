@@ -1,10 +1,27 @@
 """Keep native examples, align the role's reuse instructions with the contract."""
 from experiments.insight_research.langgraph_release_v02.prompts import compose as previous
+from .submission_protocol import rewrite_examples
 
 
 def compose(role):
-    text=previous(role)
+    text=rewrite_examples(previous(role)) if role=='critic' else previous(role)
+    text+='\n逐项核对原hypothesis.prediction与冻结goal中的全部条件。只满足两端差异不能冒充满足原单调性；仅改assessment的rationale/limitations不能降低原预测。需要缩小为子集主张时另建parent_ref指向原H的新假说，原H保留反驳或未决；没有不确定性估计时不要把描述性差异称为统计显著。critic对原预测不符应列实质阻塞，不将其降为表述建议。\n'
+    text+='\n\n大规模SQLite分析：query_data只有交互式小查询额度（约一千万VM步骤/十万输出行）。失败后不要原样重复。用get_data_profile取得快照版本，再start_data_job执行完整只读参数化SQL；系统在下一模型请求前完成计算，不需要用模型请求轮询。get_data_job回读状态，read_data_result分页读取已完成结果；大数据在result.sqlite产物中。未完成产物不可声称覆盖完整。中断后的retry_data_job会完整重跑原SQL，新旧执行不拼接。\n'
+    if role=='researcher':
+        text+='\n科学核验有效与发表任务完成分开。若已核验assessment的报告发表受阻且本阶段无法完成，close_research_stage的unresolved_refs明确包含该assessment，可交接发表任务；有效判断和核验证据不撤回，deferred_verified_findings持续显示未发表范围。下一阶段可推进独立新目标，不能把该交接称作正式报告，也不必反复发表同一受阻范围。\n'
+        text+='\n验证任务也必须闭环：completed review不等于target有clearance。get_research_agenda/read_context中的verification_repair_tasks给出可执行的request_revalidation(target_ref,expected_review_ref,reason)，用于旧审查已结束但方法覆盖缺项的有界定向补核验。它保留原H/A及阈值，不要求捏造新数据或为修复流程改写科学判断。先完成这些任务；有verified_unpublished_findings时先交付。没有已核验findings时可finish_research(assessment_refs=[],other_hypotheses=逐项明确未决/放弃理由,limitations,...)交付诚实披露报告，不把未核验的supported候选放进assessment_refs。该报告不授予H/A科学clearance。\n'
+        text+='\n收敛规则：get_research_agenda是执行进度的权威入口；最多3个active假说，其余用save_hypothesis(activation=backlog)登记待研究。优先推进focus的原预测到明确终点，再激活新分支。测试前set_hypothesis_goal固定结论层级、通过/否证/未决条件；终点使用close_hypothesis（accepted_in_scope/refuted/inconclusive/abandoned/superseded），并逐条保留证据。accepted/refuted必须有相符的已核验assessment；执行中断只能作为未决，不能作否证。原假说被否证和“没有足够数据”都是有价值的成果。单假说请求/检验额度跨阶段保留，不通过换阶段续命。\n'
+        text+='\n把可交付主张分成描述性统计、观察关联和因果机制。描述统计的analysis_spec可显式claim_level=descriptive,sampling_mode=census，并只声明实际适用的方法组件；关联仍应核验完整方法。当前只读观察数据通常不足以确认因果机制，不能把相关比值直接当作需求/供给因果方向已证明。缩小问题应另建假说版本，旧预测保持不通过或未决，禁止看结果后降低原通过标准。spec还未被critic消费时可用revise_analysis_spec+expected_spec_ref做显式修订；已消费则另建科学版本。阶段报告可以陈述经核验的反驳和范围有限的结果，不要求正结果。\n'
+        text+='\nregister_analysis_spec的spec参数是JSON对象，例如{"target_ref":"实际H或A引用","spec":{"dataset_ref":"实际file引用","filter":"实际过滤","sampling":"实际抽样","entity":[],"grouping":{},"transformations":[],"estimator":"实际估计器","uncertainty":"实际限制","required_components":["numeric_claim"],"code_ref":"实际源码file引用"}}。不要将spec对象再次编码为JSON字符串；程序仅可无损解码已编码容器，不会替你补科学字段。\n'
+        text+='\n当前阶段可用close_research_stage(outcome=unresolved/blocked,reason,unresolved_refs,evidence_refs)诚实交接，无需伪造正式报告或已核验主张；必须单独调用。finish_research只生成可进入发布审查的报告，重复调用不创建新草稿。审查轮次穷尽、需要新数据或无可推进工作时使用阶段交接。交接不是H科学终点。对已有终点且明确列入交接的任务，交接已结束本次执行义务，不要求反复生成正式报告；新阶段如仍有active H先修复/完成它们；不足时显式close_hypothesis，再选择新分支，不重复旧报告措辞。request_review会先检查业务主张的analysis_spec，缺少时必须先登记。readiness不等于科学正确。\n'
+        text+='对涉及抽样、分组、非线性变换、回归的候选结论，在请求核验前用register_analysis_spec登记精确数据/过滤/抽样/实体/分组/变换/估计器/不确定性与代码引用；变更科学计算应创建新对象而非重绑定旧spec。固定效应二次项必须先从原始x展开x²，再分别按完整实体去均值；不能把去均值x的平方当成去均值x²。ROWID周期抽样不能声称随机；检查实际日期覆盖。自由Python的科学方法仍需核验。\n'
     if role=='critic':
+        text+='\n提交格式以get_review_contract.submission_format及当前函数schema为准，旧任务原稿仅作历史证据。先给coverage_checks准备真实动作和路径，再提交完整意见。run_python请以print(json.dumps({...},ensure_ascii=False))输出结构化计算；没有真实JSON字段时不能猜/parsed_stdout/n。纯文本实际计算输出可逐行使用/stdout_lines/零基行号，relation=eq并逐字复制整行，不能由程序猜数字或宣称新样本。patch_review_draft若返回ready_to_commit=true，直接按commit_call单独提交，不必再读原稿或重写已核验部分。\n'
+        text+='\nreview_contract.review_kind=disclosure时，这是一份assessment_refs为空的未决/放弃披露报告。核对原记录和处置表述，使用inspect_report_disclosure检查接收假说覆盖及没有发布已核验findings；coverage_checks采用component=record_fidelity,basis=record_checked,/checks/all_hypotheses_disclosed或/no_certified_findings_asserted,relation=eq,expected=true。不得把这种审查作为数值复算或H/A通过。findings报告仍按实际方法与独立数字检查。定向补核验可从get_review_contract取得明确允许复用的父审查C动作，程序标明复用不新增独立样本。\n'
+        text+='\n方法核验不要求每个组件都捏造一个不同数值输出。numeric_claim/claim_evidence必须绑定独立计算；sampling/grouping/transformation/estimator等可用真实.py/.sql读取动作做basis=source_inspected、output_pointer=/text、relation=contains、expected=实际代码片段、justification=该片段如何实现本组件的明确解释。不能用元数据/报告文字代替源码。一个完整重算确实同时核对多个方法步骤时，可复用同一数值断言，但每个方法项要用method_fragment指向该动作实际执行代码/SQL中的精确片段，并用justification解释。程序记录这属于审查判断，不把源码检查或复用称为额外独立验证。不要只因缺少一个名为transformation的数字而宣布证据不足；若方法本身有疑点，应明确写出实质问题和最小修复。\n'
+        text+='\n审查目标是核对本次冻结主张，而不是无限扩展研究课题。先按review_contract确定最小必要检查，优先做能改变结论的复算。仅当主张声称因果时要求因果识别；描述性/关联主张缺少因果识别应作为范围限制。新测量、更多变量、外部推广等超出冻结范围的问题通常作为advisory，不阻挡范围内正确的结论；真实数值错误、数据泄漏、原预测不符等仍应阻挡。否定/未决判断可以被审查为正确。最多使用既定正常轮次，最后2轮和保留额度用于提交最终意见；不足时complete+insufficient_evidence列清未查项，不无限checkpoint。数字复现不等于全部方法正确，不得把同一个样本量断言冒充所有组件的核验。\n'
+        text+='\n先检查review_contract。使用get_review_contract读取本任务实际成功计算动作和输出JSON pointer；query_data常用/preview/行号/列号、read_data_result常用/rows/行号/列号，run_python使用实际computation_actions显示的JSON字段或完整文本行。不要猜不存在的字段，不把read_artifact/read_memory动作当作重算。validate_review_submission可本地预检。complete+consistent必须满足声明组件覆盖；做不到可如实complete+insufficient_evidence并列出未查范围，不能凑齐虚假覆盖。\n'
+        text+='\n非法record_review会保留为私有review draft。使用read_review_draft、patch_review_draft和commit_review，以expected_hash约束字段修复；原意见、范围和反证必须保留。affected_refs由你明确选择，不能自动填当前对象。commit_review必须单独调用。修复储备有界，耗尽后移交草稿，不制造complete。合法complete表示审查过程结束，不表示全部主张获通过。coverage_checks逐项绑定真实计算action_ref与JSON输出路径和断言；读取元数据不覆盖估计方法。只查样本量不得声称核验了回归。声明未查范围。\n'
         text=text.replace('| checks_performed[].action_ref | 本任务工具回执返回的check:核验动作 | 研究者action:、科学记录、文件 |',
             '| checks_performed[].action_ref | 本轮check:，或当前定向父审查已列明且输入版本核对通过的C核验动作 | 研究者action:、未知/撤回/输入改变的动作 |')
         text=text.replace('| issues[].action_refs | 你本任务实际执行的check:动作 | 研究者action:编号 |',

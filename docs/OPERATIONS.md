@@ -12,13 +12,13 @@ business-research run ./work/P001 --resume --stages 1
 
 Pause takes effect at a safe scheduling boundary. An active request may wait until its timeout. Main-thread SIGTERM requests cooperative pause; forced termination can leave unknown usage, retained as a reservation. Recovery is not guaranteed to avoid duplicate provider charges. Resume clears an operator pause, not the capacity, request count or deadline.
 
-The deadline starts when the controller first opens and persists through restarts and pauses. Capacity, attempts, stages, wall time and lack-of-progress controls may stop a run. Not every pending condition can be fixed with resume. This version has no supported automatic capacity-extension command.
+The deadline starts when the controller first opens and persists through restarts and pauses. Capacity, attempts, stages, wall time and lack-of-progress controls may stop a run. Not every pending condition can be fixed with resume. Automatic recovery never grants a new allowance; an explicit authorization receipt is required for a new window.
 
 ## Files and backups
 
 project.json stores configuration/source identity; researcher/ owns scientific records, processes and memory; reviews/ contains review snapshots and actions; graph_checkpoints.sqlite and graph_operations.sqlite preserve graph state; common_budget.sqlite retains shared limits, unknowns and request history; deliveries/ holds progress and archived reports.
 
-Stop the controller and close database connections before backing up the **entire workspace**. Same-version/same-absolute-path restoration is the verified procedure. Do not copy only one graph database, delete native processes or edit source identity to bypass a mismatch. Cross-path/cross-version migration must be validated separately.
+Stop the controller and close database connections before backing up the **entire workspace**. Same-version/same-absolute-path restoration is the verified procedure. Do not copy only one graph database, delete native processes or edit source identity to bypass a mismatch. Drained copy-only migration is supported for the same pinned engine; validate it against the actual predecessor before deployment. See [interfaces](AGENT_REPAIRS.zh-CN.md).
 
 ## Exit codes and common problems
 
@@ -44,3 +44,7 @@ CLI codes:0 command complete,2 error,3 pending. An inconclusive scientific resul
 Live turn progress is in deliveries/latest.json. status.last_execution is the last ended/paused invocation and may lag a current run. A handoff exists from creation, so file existence alone is not research completion.
 
 Real runs send lawful research inputs to the configured provider. No company dataset/key is distributed. This is a local component; remote authentication, native Windows isolation, general migration and day-long availability remain outside verified support.
+
+## Detached supervision
+
+Create a new project with explicit request/token/stage limits and `--wall-seconds 86400` for a 24-hour window. A two-hour project retains that deadline when resumed. Run `tools/run_continuous.py` from its installed environment in tmux with a new `--output` directory; see the complete [Chinese example](OPERATIONS.zh-CN.md). The supervisor records actual process progress, stalled intervals, bounded recoveries and the final result.

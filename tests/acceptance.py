@@ -28,6 +28,9 @@ class NativeFixture:
 
     def response(self, payload):
         root = self.root
+        stage=json.loads((root/'project.json').read_text())['active_stage']
+        expression='value' if stage==1 else 'value*value'
+        expected_total=36 if stage==1 else 204
         critic = any(t['function']['name']=='record_review' for t in payload['tools'])
         self.calls.append({'role':'critic' if critic else 'researcher','max_tokens':payload['max_tokens'],
                            'thinking':payload.get('thinking')})
@@ -35,7 +38,7 @@ class NativeFixture:
             marker = db.execute("SELECT value FROM meta WHERE key='release_stage_marker'").fetchone()
             marker = int(marker[0]) if marker else 0
             stage_h = [json.loads(b) for b, in db.execute("SELECT body FROM records WHERE kind='hypothesis' AND rowid>?", (marker,))]
-            pending = db.execute("SELECT ref,target FROM review_jobs WHERE status IN ('pending','running') ORDER BY rowid LIMIT 1").fetchone()
+            pending = db.execute("SELECT j.ref,j.target FROM review_jobs j LEFT JOIN release_task_state b ON b.job=j.ref WHERE j.status IN ('pending','running') AND b.job IS NULL ORDER BY j.rowid LIMIT 1").fetchone()
         hs, plans, results, assessments = [recs(root,k) for k in ('hypothesis','plan','result','assessment')]
         if critic:
             job,target = pending
@@ -47,7 +50,7 @@ class NativeFixture:
             if not read:
                 name,args='read_memory',{'ref':target,'offset':0,'limit':12000}
             elif not query:
-                name,args='query_data',{'sql':'SELECT count(*) AS n,sum(value) AS total FROM observations','purpose':'Independent fixture recomputation'}
+                name,args='query_data',{'sql':'SELECT count(*) AS n,sum('+expression+') AS total FROM observations','purpose':'Independent fixture recomputation'}
             else:
                 action = query[-1]
                 # Read the exact actual action reference from its durable row.
@@ -56,13 +59,15 @@ class NativeFixture:
                 args=template('critic','review_clean')
                 args.update(source_refs=[target],checks_performed=[{'action_ref':ref,'finding':'Actual SQL returned eight rows and positive total; only this finite observational fixture is checked.','artifact_refs':[]}],
                             checked_scope=['Original target and independent SQL count/sum'],unchecked_scope=['No causal identification or external generalization'])
+                args['coverage_checks']=[{'component':'claim_evidence','action_ref':ref,
+                    'output_pointer':'/preview/0/1','relation':'gt','expected':0}]
                 if (str(root),job) not in self.bad_submitted:
                     args['prior_issue_updates']={'UNKNOWN_ANCESTOR_ISSUE':'resolved'}
                     self.bad_submitted.add((str(root),job))
                 name='record_review'
         elif not stage_h:
-            name,args='save_hypothesis',{'kind':'data_quality','statement':'The received table has positive total value.',
-                'scope':'Only the eight supplied rows; engineering fixture.', 'prediction':'The sum of value in the supplied table is greater than zero.',
+            name,args='save_hypothesis',{'kind':'data_quality','statement':'The received table has positive total of '+expression+'.',
+                'scope':'Only the eight supplied rows; engineering fixture.', 'prediction':'The sum of '+expression+' in the supplied table is greater than zero.',
                 'falsification':'A total at or below zero refutes this sample-level prediction.',
                 'alternatives':['The total is positive.','The total is nonpositive.'],'evidence_refs':[]}
         else:
@@ -76,13 +81,13 @@ class NativeFixture:
                 name,args='register_test',{'hypothesis_ref':h['ref'],'prediction':h['prediction'], 'contrast':'Compare the exact observed total to zero.',
                     'observation_unit':'supplied row','allocation_unit':'none','analysis':'Exact SQL sum, observational sample-level check.',
                     'purpose':'Test original finite prediction.','data_refs':[data],'mode':'observational',
-                    'code':"import sqlite3,json,os\nfrom pathlib import Path\ndb=sqlite3.connect('file:'+str(Path(os.environ['PUBLIC_DIR'])/'business.sqlite')+'?mode=ro',uri=True)\nn,total=db.execute('SELECT count(*),sum(value) FROM observations').fetchone()\nprint(json.dumps({'n':n,'total':total}))"}
+                    'code':"import sqlite3,json,os\nfrom pathlib import Path\ndb=sqlite3.connect('file:'+str(Path(os.environ['PUBLIC_DIR'])/'business.sqlite')+'?mode=ro',uri=True)\nn,total=db.execute('SELECT count(*),sum("+expression+") FROM observations').fetchone()\nprint(json.dumps({'n':n,'total':total}))"}
             elif not result:
                 name,args='run_test',{'plan_ref':plan['ref']}
             elif not assessment:
                 name='record_assessment';args=template('researcher','assessment')
                 args.update(hypothesis_ref=h['ref'],result_refs=[result['ref']],status='supported',
-                            prediction_coverage='Exact supplied-row sum was checked.',rationale='Actual sandbox returned n=8,total=36, satisfying the registered finite prediction.',
+                            prediction_coverage='Exact supplied-row sum was checked.',rationale=f'Actual sandbox returned n=8,total={expected_total}, satisfying the registered finite prediction.',
                             limitations=['A sample-level engineering check; no business mechanism or causal effect is established.'])
             elif pending:
                 name,args='request_review',{'job_ref':pending[0],'reason':'Independently verify this candidate against original data.'}
@@ -91,7 +96,7 @@ class NativeFixture:
                     states=[json.loads(b) for b, in db.execute("SELECT body FROM records WHERE kind='state' AND rowid>?",(marker,))]
                 if not states:
                     name='update_research_state';args=template('researcher','state')
-                    args.update(question='Engineering-only finite research fixture.',why='Incorporate actual independent check.',understanding='The sample total is36 for8rows; no causal or general claim.',
+                    args.update(question='Engineering-only finite research fixture.',why='Incorporate actual independent check.',understanding=f'The sample total is{expected_total} for8rows; no causal or general claim.',
                         active_hypothesis_refs=[item['ref'] for item in hs],focus_hypothesis_refs=[h['ref']],evidence_refs=[result['ref']],
                         incorporated_result_refs=[r['ref'] for r in results],next_action='Deliver the finite result and limits.',next_reason='The registered sample-level question has been checked.')
                 else:
@@ -133,7 +138,7 @@ def main(output):
         result=run_project(root,stages=2)
         checks['two_actual_graph_research_stages']=result['status']=='completed' and len(recs(root,'report'))==2
         checks['two_native_hypothesis_test_assessment_cycles']=len(recs(root,'hypothesis'))==2 and len(recs(root,'result'))==2 and len(recs(root,'assessment'))==2
-        checks['actual_sandbox_values_and_source_reads']=all(r['ok'] and json.loads(r['actual_execution']['stdout'])=={'n':8,'total':36} and r['actual_execution']['source_reads'] for r in recs(root,'result'))
+        checks['actual_sandbox_values_and_source_reads']=all(r['ok'] and json.loads(r['actual_execution']['stdout'])=={'n':8,'total':total} and r['actual_execution']['source_reads'] for r,total in zip(recs(root,'result'),[36,204]))
         checks['both_roles_used_independent_tools']=sum(c['role']=='critic' for c in fixture.calls)>=6
         checks['formal_reports_readable_and_archived']=len(list((root/'deliveries').glob('F*.md')))==2
         checks['no_experiment_billing_required']='token_budget_pointer' not in model

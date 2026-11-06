@@ -13,6 +13,23 @@ from model_protocol import generation_request, request_model
 from token_budget import SharedTokenBudget, reservation_bound
 
 
+def normalize_provider_response(value):
+    """vLLM uses reasoning; preserve it while supplying the runtime wire alias."""
+    normalized = deepcopy(value)
+    changes = []
+    choices = normalized.get('choices')
+    if not isinstance(choices, list):
+        return normalized, changes
+    for index, choice in enumerate(choices):
+        if not isinstance(choice, dict):
+            continue
+        message = choice.get('message')
+        if isinstance(message, dict) and 'reasoning_content' not in message and isinstance(message.get('reasoning'), str):
+            message['reasoning_content'] = message['reasoning']
+            changes.append({'choice': index, 'from': 'reasoning', 'to': 'reasoning_content'})
+    return normalized, changes
+
+
 def call_model(config, payload):
     if config.get('token_budget_pointer'):
         return request_model(config, payload)
@@ -35,7 +52,11 @@ def call_model(config, payload):
                 value = json.loads(raw)
                 if not isinstance(value, dict):
                     raise ValueError('API envelope must be an object')
-                result['response'] = value
+                normalized, changes = normalize_provider_response(value)
+                result['response'] = normalized
+                if changes:
+                    result['provider_response'] = value
+                    result['response_normalization'] = changes
             except ValueError as error:
                 result.update(error_type='response_envelope', error=str(error), response_body=raw)
     except urllib.error.HTTPError as error:
@@ -48,6 +69,16 @@ def call_model(config, payload):
 
 
 class ExecutionJournal(Cooldown, ContextStudyJournal):
+    def persist_request(self, attempt, payload):
+        super().persist_request(attempt, payload)
+        if self.role == 'researcher':
+            from .convergence import account_request
+            account_request(self.ws, attempt)
+            if getattr(self,'_planning_closeout_admitted',False):
+                from .workflow import stage_number
+                with self.ws.db:
+                    self.ws.db.execute('INSERT OR IGNORE INTO release_closeout_turns VALUES (?,?)',(attempt,stage_number(self.ws)))
+                    self.ws.db.execute('INSERT OR IGNORE INTO release_closeout_scopes VALUES (?,?)',(attempt,self._planning_closeout_scope))
     """All roles share finite local execution caps; no mandatory billing setup."""
     def __init__(self, workspace, model, budget, role, *, memory, guard):
         Journal.__init__(self, workspace, model)
@@ -64,12 +95,46 @@ class ExecutionJournal(Cooldown, ContextStudyJournal):
         return {'status': status, 'remaining_admission_tokens': remaining, 'study_usage': local}
 
     def call(self, payload):
+        from .transport_recovery import cooldown
+        cooldown(self)
         paid = self.state.get('inflight') or self.state.get('delivery')
         if paid:
             from experiments.insight_research.runtime_memory import reconstruct_request
             payload = reconstruct_request(self.ws.private, paid['attempt'])
         else:
-            state = self.guard.admit(self.config.get('request_timeout_seconds', 600))
+            allocation = getattr(self.ws, 'review_allocation', None)
+            if allocation:
+                from .review_drafts import ReviewDrafts
+                maximum = allocation['maximum_requests']
+                if self.state['attempts'] >= maximum:
+                    raise Pending('review_execution_blocked: local review allocation exhausted; draft, costs and unverified scope retained. Continue independent work or explicitly allocate another slice within original authorization.')
+            packet=getattr(self.ws,'packet',{}); candidate=packet.get('candidate_record',{})
+            findings=candidate.get('assessment_refs',[])
+            publication=(bool(allocation) and candidate.get('record_type')=='report_draft' and bool(findings)
+                         and all(self.guard.owner.clearance(ref) for ref in findings))
+            if allocation and candidate.get('record_type')=='report_draft' and not findings:
+                from .convergence import active_refs
+                publication=(not active_refs(self.guard.owner) and
+                             {h['ref'] for h in self.guard.owner.records('hypothesis')}<=set(candidate.get('other_hypotheses',{})))
+            # A bounded independent verification slice is useful work even
+            # when it reproduces exactly the original numerical data.
+            verification=(bool(allocation) and candidate.get('record_type')!='report_draft'
+                          and packet.get('release_review_contract',{}).get('ready',False))
+            planning=False
+            bounded_goal=False
+            if self.role=='researcher' and self.ws.records('hypothesis'):
+                from .convergence import active_refs,focus,usage,policy
+                from .workflow import stage_number
+                from .verification_tasks import unpublished_findings,pending_disclosures,closeout_scope
+                self._planning_closeout_scope=closeout_scope(self.ws)
+                used=self.ws.db.execute('SELECT count(*) FROM release_closeout_scopes WHERE scope=?',(self._planning_closeout_scope,)).fetchone()[0]
+                planning=(not active_refs(self.ws) and used<4 and bool(unpublished_findings(self.ws) or pending_disclosures(self.ws)))
+                selected=focus(self.ws)
+                if selected:
+                    limits=policy(self.ws)
+                    bounded_goal=usage(self.ws,selected['hypothesis_ref'])['requests']<limits['hypothesis_requests']+limits['closeout_requests']
+            self._planning_closeout_admitted=(planning and self.guard.inspect()['effective_requests_without_progress']>=self.guard.stop)
+            state = self.guard.admit(self.config.get('request_timeout_seconds', 600),workflow_closeout=publication or verification or planning,bounded_goal=bounded_goal)
             left = self.study.snapshot()['remaining_http_attempts']
             if left <= 8 or state['requests_without_structural_progress'] >= self.guard.warn:
                 payload = {**payload, 'messages': [*payload['messages'], {'role': 'user', 'content':

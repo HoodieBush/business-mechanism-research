@@ -43,6 +43,16 @@ jobs:
         run: python tests/isolation.py --output "$RUNNER_TEMP/business-research-isolation"
       - name: Run local fixture, zero external model calls
         run: python tests/acceptance.py --output "$RUNNER_TEMP/business-research-acceptance"
+      - name: Review repair, batch query and scientific counterexamples
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Whole update compatibility, zero external model calls
+        run: python tests/update_compatibility.py --output "$RUNNER_TEMP/business-research-update-compatibility"
+      - name: Business coverage and unresolved stage lifecycle, zero external model calls
+        run: python tests/business_workflow.py --output "$RUNNER_TEMP/business-research-business-workflow"
+      - name: Finite continuous supervisor fixture, zero external model calls
+        run: python tests/continuous.py --output "$RUNNER_TEMP/business-research-continuous"
+      - name: Resume with inherited costs and original deadline, zero external model calls
+        run: python tests/continuation.py --output "$RUNNER_TEMP/business-research-continuation"
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
@@ -50,4 +60,9 @@ jobs:
           path: |
             ${{ runner.temp }}/business-research-acceptance/result.json
             ${{ runner.temp }}/business-research-isolation/result.json
+            ${{ runner.temp }}/business-research-continuous/result.json
+            ${{ runner.temp }}/business-research-business-workflow/result.json
+            ${{ runner.temp }}/business-research-continuation/result.json
+            ${{ runner.temp }}/business-research-update-compatibility/result.json
+            ${{ runner.temp }}/business-research-update-compatibility/contract-manifest.json
           if-no-files-found: ignore

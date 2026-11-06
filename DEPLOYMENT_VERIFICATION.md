@@ -1,19 +1,21 @@
-# Deployment verification
+# v0 deployment verification
 
-## Version0.1.5
+v0 is verified locally on Linux with bubblewrap and Python3.12. This receipt covers local Linux; use the matching-commit CI results for macOS. All engineering checks use local fixtures and zero external model calls.
 
-A shared execution seam now supports macOS and Linux bubblewrap, and preserves the venv Python entry point. CI creates a real venv on macOS15 and Ubuntu24.04, installs the tested dependencies and source, then runs the actual platform isolation and two-stage integration fixtures. Both hosted jobs passed: macOS17 engineering +10 isolation checks, Linux17 engineering +14 isolation checks. See [the exact tested CI run](https://github.com/HoodieBush/business-mechanism-research/actions/runs/41772463570) and verification/deployment_acceptance.json. Overlapping checks are not new scientific samples. Linux namespace readiness is tested before a model call; unavailable isolation does not fall back.
+| Check | Count |
+|---|---:|
+| Regression tests | 75 |
+| Linux isolation | 14 |
+| Two-stage acceptance | 17 |
+| Business workflow | 21 |
+| Continuous supervisor | 9 |
+| Continuation | 9 |
+| Cross-layer update compatibility | 11 |
 
-## Historical Version0.1.4
+The75 regression cases comprise73 passes and2 optional historical-bundle skips; mandatory synthetic migration coverage passed.
 
-Version0.1.4 is a source export and packaging correction. It is tested on macOS arm64/Python3.12 with requirements-tested.txt. No provider credential is needed for engineering reproduction.
+The installed wheel additionally passes CLI/preflight, dependency checks and the actual two-stage fixture outside its source directory. Source archives are checked for fixed-engine integrity, necessary deployment files, version consistency and excluded private/runtime files. Machine-readable results are recorded in [verification/v0.json](verification/v0.json).
 
-The preceding local package was first installed in a new virtual environment: all65 locked dependencies downloaded from the public PyPI index, the actual wheel installed, pip check passed, and the integration fixture passed all17 checks with45 loopback HTTP requests and0 external provider calls. The original repository was absent from sys.path; system site-packages were disabled. The Python interpreter's standard library remains supplied by its base Python installation, as with a normal venv.
+To reproduce, install the tested requirements and package in a new Python3.12 environment, then run the commands in [CONTRIBUTING.md](CONTRIBUTING.md). Output directories must not already exist. An actual deployment upgrade additionally requires a drained predecessor, explicit copy migration and the deployment-copy mode of tests/update_compatibility.py before a changed paid run.
 
-The public0.1.4 source is separately built into a wheel and installed into that environment. The same actual integration fixture and new deployment/preflight commands are checked against this public source export. Final results are recorded in verification/deployment_acceptance.json and verification/engineering_acceptance_result.json.
-
-The installation preflight exercises real sandbox launch and denied file access. Documentation command checks cover sample-data generation, refusal to overwrite an existing sample, create/status/report/pause without a model call, and rejection of placeholder endpoints, missing credentials and invalid data folders.
-
-This is a fresh software environment on the development Mac, not a second physical company's machine. GitHub CI provides an additional hosted machine when it completes. No real-provider connectivity test is performed for recipients, no key is distributed, and no scientific discovery or24-hour availability claim follows from these deployment tests.
-
-To reproduce from a checkout use README.md. A provider-specific real run additionally requires your own compatible service and credential. The preceding0.1.4 snapshot supported macOS only;0.1.5 adds the Linux adapter. Native Windows remains unverified/unsupported.
+These checks establish their engineering coverage. They do not certify the correctness of business mechanisms or completion of a continuous 24-hour experiment. See [evaluation scope](docs/EVALUATION.md).

@@ -26,6 +26,10 @@ def backend_name():
 
 
 class RestrictedPythonWorkspace(PythonWorkspace):
+    def run(self, code, timeout=45):
+        from .bounded_worker import run
+        return run(self, code, timeout)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.private_code_roots = (Path(__file__).resolve().parent,)

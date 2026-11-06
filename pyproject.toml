@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "business-mechanism-research"
-version = "0.1.5"
+version = "0.0.0"
 description = "Persistent researcher-critic agents for evidence-led business mechanism research"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
@@ -33,3 +33,6 @@ include = ["business_mechanism"]
 
 [tool.setuptools.package-data]
 business_mechanism = ["_engine/**/*", "engine_manifest.json"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["**/__pycache__/*", "**/*.pyc", "**/*.pyo"]

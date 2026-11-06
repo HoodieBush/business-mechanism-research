@@ -1,25 +1,14 @@
-# 修订记录
+# Changelog
 
-## 0.1.5 Linux隔离适配
+## v0 — 2026-11-06
 
-新增Linux bubblewrap后端，与macOS共用研究主干、工具和执行回执。隔离不可用时明确拒绝，新增真实网络/文件/进程边界测试和Linux CI；保留venv解释器入口，避免工作进程误用缺依赖的base Python。旧工作区仍需固定源版本或显式迁移。
+Initial v0 release of the business mechanism research system.
 
-## 0.1.4 独立开源快照
+- Actual LangGraph researcher–critic workflow, read-only SQLite and isolated Python execution.
+- Persistent batch query outputs, paging, explicit retry and source-attributed results.
+- Durable review drafts, field-level repair, idempotent commits and paid-request tool validation.
+- Active-hypothesis limits, explicit unresolved endpoints, bounded recovery and detached supervision.
+- Copy-only migration retaining scientific originals, charges and deadlines.
+- Role-specific reference feedback fix, current-version installation preflight, and cross-layer update acceptance.
 
-新增可独立构建的源码项目、中英文README、系统/配置/API/运维文档、复现说明、公开合成示例、预检、CI、引用信息和MIT许可证。修复旧本地包过宽导出相邻文件的问题，剔除32份开发期文档、配置和接口探针记录，仅保留必要源码、运行提示词及合约。研究方法和提示词文本不因导出改变；源身份更新，旧工作区需显式迁移。
-
-## 0.1.3 本地研发版
-
-错误HTTP及费用持久化、确认之前崩溃时可单次确认并恢复，保留全部费用。
-
-## 0.1.2
-
-修复旧核验复用的Prompt/工具冲突，核对来源与输入版本；从确切动作补机械文件链接，不猜ID或修改科学意见。
-
-## 0.1.1
-
-正式报告未形成时，从保存原件导出可读假说、判断、质疑、回应与下一步。
-
-## 0.1.0
-
-独立LangGraph本地CLI/Python API、双角色、外部SQLite、多阶段、共享执行限制、恢复和交付。普通部署不要求实验总账。
+Scientific efficacy and full day-long availability remain unverified. See [v0 notes](docs/releases/v0.md) and [evaluation scope](docs/EVALUATION.md).

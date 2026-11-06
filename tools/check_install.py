@@ -9,6 +9,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import tomllib
 from urllib.parse import urlparse
 
 
@@ -25,7 +26,10 @@ def main(model_path=None,data_path=None):
         else:add('import:'+name,True,'Import succeeded.')
     try:version=importlib.metadata.version('business-mechanism-research')
     except importlib.metadata.PackageNotFoundError:version='not-installed'
-    add('release_version',version=='0.1.5','Installed version: '+version)
+    expected=tomllib.loads((Path(__file__).resolve().parents[1]/'pyproject.toml').read_text())['project']['version']
+    from business_mechanism import __version__ as code_version
+    add('release_version',version==code_version==expected,
+        'Expected: '+expected+'; installed metadata: '+version+'; imported package: '+code_version)
     try:
         from business_mechanism.sandbox import probe_runtime
         probe=probe_runtime()

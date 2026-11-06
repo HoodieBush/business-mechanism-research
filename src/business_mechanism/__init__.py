@@ -4,7 +4,7 @@ import sys
 import hashlib
 import json
 
-__version__ = '0.1.5'
+__version__ = '0.0.0'
 
 
 def _bootstrap():
@@ -41,3 +41,23 @@ def run_project(*args, **kwargs):
 def project_status(*args, **kwargs):
     from .service import project_status as status
     return status(*args, **kwargs)
+
+
+def allocate_review_requests(*args, **kwargs):
+    from .allocations import allocate_review_requests as allocate
+    return allocate(*args, **kwargs)
+
+
+def migrate_project_copy(*args, **kwargs):
+    from .migration import migrate_project_copy as migrate
+    return migrate(*args, **kwargs)
+
+
+def close_project_stage(*args, **kwargs):
+    from .service import close_project_stage as close
+    return close(*args, **kwargs)
+
+
+def recover_project_protocol(*args, **kwargs):
+    from .service import recover_project_protocol as recover
+    return recover(*args, **kwargs)

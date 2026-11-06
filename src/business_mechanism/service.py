@@ -1,5 +1,6 @@
 """Local integration API with finite, persistent, cross-role execution limits."""
 from copy import deepcopy
+from contextlib import ExitStack
 import json
 from pathlib import Path
 import signal
@@ -16,6 +17,7 @@ from .engine import Backend, ResearchWorkspace, SQLiteWorkspace, source_identity
 from .graph import open_graph, export_handoff
 from .delivery import export_report
 from .sandbox import probe_runtime
+from .workflow import archive_stage_window
 
 DEFAULT_LIMITS = {'token_allowance': 2000000, 'max_http_attempts': 80, 'max_transport_retries': 2,
                   'round_wall_seconds': 3600, 'max_request_bytes': 524288, 'recent_turns': 4,
@@ -75,8 +77,9 @@ def create_project(path, question, model, *, data=None, demo=None, limits=None, 
     settings = {'research_profile': 'paired_research_v1', 'verification_mode': 'independent',
                 'model_config': deepcopy(model), 'limits': cfg, 'prompt_runtime_sources': prompt_sources(),
                 'release_sources': source_identity(), 'workflow_policy': {'max_lineage_reviews': 4},
+                'research_policy': {'max_active_hypotheses':3,'hypothesis_requests':24,'hypothesis_test_runs':6,'closeout_requests':4},
                 'execution_policy': {'active_context_bytes': 65536, 'closeout_reserve_tokens': min(400000, cfg['token_allowance']//3),
-                    'review_http_limit': 10, 'wall_seconds': wall_seconds, 'warn_after_requests': 8, 'stop_after_requests': 16},
+                    'review_http_limit': 10, 'review_repair_requests': 3, 'wall_seconds': wall_seconds, 'warn_after_requests': 8, 'stop_after_requests': 16},
                 'initialization_notice': 'Research starts with the supplied lawful inputs and no harness-provided scientific conclusions. Choose hypotheses and checks yourself; negative and unresolved results are legitimate.'}
     project = {'version': 1, 'created_at': now(), 'question': question, 'input_kind': kind,
                'demo': demo, 'settings': settings, 'max_stages': max_stages, 'active_stage': 1,
@@ -99,8 +102,10 @@ def create_project(path, question, model, *, data=None, demo=None, limits=None, 
     return project_status(root)
 
 
-def open_project(path):
+def open_project(path, *, _migration_validation=False):
     root = Path(path).expanduser().resolve()
+    if (root/'migration_incomplete.json').exists() and not _migration_validation:
+        raise ValueError('Migration is incomplete; preserve its receipt and use the original project. Do not resume this copy.')
     project = json.loads((root/'project.json').read_text())
     if project['source_identity'] != source_identity():
         raise ValueError('Source version differs; use the pinned release to resume, or explicitly migrate without overwriting old state.')
@@ -138,27 +143,78 @@ def request_pause(path, reason='operator request'):
     write_json(root/'pause_requested.json', {'at': now(), 'reason': reason})
 
 
+def close_project_stage(path, *, reason, unresolved_refs, evidence_refs, event_id):
+    """Explicit operator handoff of paused work; costs/deadline/claims unchanged."""
+    from .workflow import close_stage
+    if not event_id or len(reason) < 10:
+        raise ValueError('An explicit event_id and substantive unresolved reason are required')
+    root = Path(path).expanduser().resolve()
+    with ExitStack() as stack:
+        locks = [root/'service.lock', root/'research_run.lock', root/'researcher/private/runtime.lock',
+                 *root.glob('reviews/*/critic/private/runtime.lock')]
+        for lock_path in locks:
+            stream = stack.enter_context(lock_path.open('a'))
+            try: fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise ValueError('Pause and drain the project before operator stage closure') from None
+        _, _, ws, backend = open_project(root)
+        try:
+            with ws.db:
+                item = close_stage(ws, outcome='blocked', reason=reason, unresolved_refs=unresolved_refs,
+                                   evidence_refs=evidence_refs, key='operator:'+event_id, actor='operator')
+            export_handoff(backend, 'stage_closed', reason)
+            export_report(backend)
+            return {'stage_outcome': item, 'execution_usage': backend.budget.snapshot()}
+        finally:
+            ws.close()
+
+
+def recover_project_protocol(path, *, event_id):
+    """Recover one losslessly decodable rejected paid spec call, without HTTP."""
+    from .tool_protocol import recover_protocol_rejection
+    root = Path(path).expanduser().resolve()
+    with ExitStack() as stack:
+        for lock_path in (root/'service.lock', root/'research_run.lock'):
+            stream = stack.enter_context(lock_path.open('a'))
+            try: fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                raise ValueError('Pause the project before protocol recovery') from None
+        _, _, ws, backend = open_project(root)
+        try:
+            return recover_protocol_rejection(backend.runtime, event_id)
+        finally:
+            ws.close()
+
+
 def advance_stage(root, project, ws, backend):
     report = ws.report()
-    if not report:
+    outcome = ws.stage_outcome()
+    previous_ref = report['ref'] if report else outcome['ref'] if outcome else None
+    if not previous_ref:
         raise Pending('Current stage has no current valid report; preserve unresolved work before advancing.')
     if backend.runtime.cp.get('pending') or backend.journal.state.get('inflight') or backend.journal.state.get('delivery'):
         raise Pending('Drain paid work before advancing a stage.')
     if project['active_stage'] >= project['max_stages']:
         return False
+    archive_stage_window(backend.runtime)
     marker = ws.db.execute('SELECT coalesce(max(rowid),0) FROM records').fetchone()[0]
     with ws.db:
         ws.db.execute("INSERT OR REPLACE INTO meta VALUES ('release_stage_marker',?)", (str(marker),))
         ws.db.execute('INSERT INTO release_stages VALUES (?,?,?,?)',
-                      (project['active_stage']+1, marker, report['ref'], now()))
+                      (project['active_stage']+1, marker, previous_ref, now()))
     project['active_stage'] += 1
     write_json(root/'project.json', project)
     history = json.loads((root/'stage_history.json').read_text())
     history.append({'stage': project['active_stage'], 'started_at': now(), 'starting_record_rowid': marker,
-                    'previous_report_ref': report['ref'], 'all_prior_science_and_costs_retained': True})
+                    'previous_report_ref': report['ref'] if report else None,
+                    'previous_stage_outcome': outcome, 'all_prior_science_and_costs_retained': True})
     write_json(root/'stage_history.json', history)
-    backend.runtime.cp['messages'].append({'role': 'user', 'content':
-        'A new research stage begins after the completed report '+report['ref']+'. Preserve and reuse prior evidence and memory. Decide which next hypothesis, counterevidence or missing measurement is worth studying. Do not re-publish the previous draft as new work. The same total resource limits still apply.'})
+    # Archive the exact old window with the existing owned-journal mechanism;
+    # start a fresh task view so repeated historical finish calls are not the
+    # next stage's active instruction. All raw paid turns remain on disk.
+    backend.runtime.cp['context_windows'] = backend.runtime.cp.get('context_windows', 0)+1
+    backend.runtime.cp['messages'] = backend.runtime.initial()+[{'role': 'user', 'content':
+        'A new execution stage begins after '+previous_ref+'. The previous stage may be unresolved, not a cleared scientific finding. Consult get_research_agenda first. If active hypotheses remain, prioritize completing their existing goals, repairing review evidence or explicitly closing their endpoints before opening another branch. A stage handoff does not close an H. A declared method check/review repair can complete the existing plan without inventing new data; retain all counterevidence and acknowledge reused computations. Register an analysis spec before business review. Same total costs and authorized deadline apply.'}]
     backend.runtime.cp.update(status='running', reason=None); backend.runtime.save()
     return True
 
@@ -186,8 +242,12 @@ def run_project(path, *, stages=1, resume=False):
             previous_handler = signal.signal(signal.SIGTERM, lambda *_: request_pause(root, 'SIGTERM'))
         result = {'status': 'ready'}
         for stage_index in range(stages):
-            if ws.report() and not advance_stage(root, project, ws, backend):
-                result = {'status': 'completed', 'reason': 'registered stage count reached'}; break
+            if ws.stage_outcome() and (backend.runtime.cp.get('pending') or backend.journal.state.get('delivery')):
+                backend.runtime.run(0)
+            if (ws.report() or ws.stage_outcome()) and not advance_stage(root, project, ws, backend):
+                result = {'status': 'stage_closed' if ws.stage_outcome() else 'completed',
+                          'reason': 'registered stage count reached', 'stage_outcome': ws.stage_outcome(),
+                          'formal_report': bool(ws.report())}; break
             stage = project['active_stage']
             with open_graph(backend, thread_id='stage-'+str(stage), max_turns=project['settings']['limits']['max_http_attempts']+10) as graph:
                 result = graph.invoke(resume=resume)
@@ -201,7 +261,7 @@ def run_project(path, *, stages=1, resume=False):
             result.pop('__interrupt__', None)
             result['stage'] = stage
             write_json(root/'service_status.json', result)
-            if result.get('status') != 'completed':
+            if result.get('status') not in ('completed', 'stage_closed'):
                 break
             resume = False
         export_handoff(backend, result.get('status', 'pending'), result.get('reason', 'finite service slice ended'))
